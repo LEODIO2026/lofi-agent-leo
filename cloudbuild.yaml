@@ -1,0 +1,31 @@
+# [Neon Blossom Lofi] Google Cloud Build 레시피 (cloudbuild.yaml)
+# 이 파일은 GitHub 푸시 시 자동으로 실행되어 클라우드 환경을 배포합니다.
+
+steps:
+  # 1. 도커 이미지 빌드 (로컬 환경과 무관하게 클라우드 리눅스에서 3.10+ 버전으로 빌드됨)
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/lofi-repo/lofi-agent', '.']
+
+  # 2. 빌드된 이미지를 Artifact Registry로 푸시
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/lofi-repo/lofi-agent']
+
+  # 3. Cloud Run Jobs에 배포 (상시 대기 상태로 업데이트)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'jobs'
+      - 'deploy'
+      - 'lofi-agent'
+      - '--image'
+      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/lofi-repo/lofi-agent'
+      - '--region'
+      - 'asia-northeast3'
+      - '--execute-now' # 배포 즉시 1회 테스트 실행 (옵션)
+
+images:
+  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/lofi-repo/lofi-agent'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

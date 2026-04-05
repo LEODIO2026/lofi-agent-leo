@@ -1,0 +1,26 @@
+# [Neon Blossom Lofi] GitHub 보안 설정 (.gitignore)
+# 중요: 비밀 정보는 절대 올리지 않습니다!
+
+# 1. 시크릿 및 인증 정보 (절대 업로드 금지)
+token.json
+credentials.json
+.GEMINI_API_KEY
+*.key
+*.pem
+secrets/
+
+# 2. 로컬 도구 및 환경 (대용량 파일)
+google-cloud-sdk/
+.venv/
+.env
+__pycache__/
+.DS_Store
+
+# 3. 대용량 미디어 에셋 (합본은 클라우드에서 생성)
+assets/**/*.mp4
+assets/**/*.mp3
+automation_log.txt
+
+# 4. 에이전트 전용 폴더
+.agent/
+.gemini/

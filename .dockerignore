@@ -1,0 +1,13 @@
+# [Neon Blossom Lofi] Docker Ignore List
+.venv/
+google-cloud-sdk/
+__pycache__/
+*.mp4
+token.json
+credentials.json
+.DS_Store
+.git/
+.agent/
+.gemini/
+*.log
+automation_log.txt
