@@ -226,25 +226,15 @@ def generate_seo_metadata(image_prompt, music_style):
     
     client = genai.Client(api_key=api_key)
     
-    PRODUCTION_NOTES = (
-        "📋 Production Notes\n"
-        "Channel: Neon Blossom Lofi\n"
-        "Executive Producer: AI Agent Leo\n"
-        "Audio Engine: Google AI Lyria 3\n"
-        "Audio Prompt: Soft romantic chillhop, warm cyberpunk synthwave, atmospheric rainy night ambient, 75 bpm, melodic and nostalgic.\n"
-        "Creative Concept: Fusing global top-search terms Lofi and Cyberpunk with a Romantic aesthetic, "
-        "crafted specially for late-night (Midnight) listeners worldwide."
-    )
-
     system_prompt = (
-        "You are a world-class YouTube content strategist and copywriter for a premium Global Lofi music channel called 'Neon Blossom Lofi'. "
-        "Your task is to write SEO metadata that feels authentic, atmospheric, and emotionally resonant — like a real, successful lofi music channel (e.g. Lofi Girl, ChilledCow). "
+        "You are a poetic, emotionally intelligent copywriter for a premium Global Lofi music channel called 'Neon Blossom Lofi'. "
+        "Your task is to write SEO metadata that feels deeply authentic, atmospheric, and emotionally resonant. "
         "CRITICAL RULES: "
         "1. ALL output must be in English ONLY. No exceptions. "
         "2. Return ONLY a valid JSON object with keys: 'title', 'description', 'tags'. "
-        "3. The description must feel like a premium YouTube music channel post — immersive, warm, inviting. "
-        "It should open with a vivid mood-setting sentence, describe the music, invite the listener to relax, "
-        "then include a 'Production Notes' section, and close with a formatted hashtag block. "
+        "3. The description must feel like a personal, artistic diary entry or a warm invitation to relax. "
+        "It should NEVER sound corporate, commercial, or like a marketing pitch. "
+        "Include a vivid mood-setting story, describe the chillhop vibe, and gently mention the AI tools used as 'Creative Process' rather than 'Product Notes'. "
         "4. Title: 50-70 characters, emotional, click-worthy. Use an em dash (—) for style."
     )
 
@@ -253,18 +243,15 @@ def generate_seo_metadata(image_prompt, music_style):
         f"Visual Theme: {image_prompt}\n"
         f"Music Style: {music_style}\n\n"
         f"DESCRIPTION FORMAT (follow this structure exactly):\n"
-        f"[1-2 sentences: Vivid, poetic mood-setting opener. Describe the scene and feeling.]\n\n"
-        f"[2-3 sentences: Describe the music — tempo, instruments, vibe. What it's perfect for (studying, sleeping, chilling).]\n\n"
+        f"[1-2 sentences: A poetic, vivid story setting the mood. Describe the rain, the neon lights, and the feeling of midnight solitude.]\n\n"
+        f"[2-3 sentences: Describe the music — the tempo, the instruments, and the calming vibe. Invite the listener to study, sleep, or relax with us.]\n\n"
         f"🎵 Tracklist: 00:00 — Full Mix (No Ads)\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"📋 Production Notes\n"
-        f"Channel: Neon Blossom Lofi\n"
-        f"Produced by: AI Agent Leo\n"
-        f"Audio Engine: Google AI Lyria 3\n"
-        f"Audio Style: Soft romantic chillhop · Cyberpunk synthwave · Rainy night ambient · 75 BPM\n"
-        f"Concept: Fusing #Lofi + #Cyberpunk + Romantic aesthetics. Crafted for global midnight listeners.\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"[Hashtag block: 10-15 hashtags including #lofi #cyberpunk #chillhop #aesthetic #lofigirl #lofihiphop #studymusic #sleepmusic #relaxingmusic #animestyle #neonblossom #lofibeats #midnightvibes]\n\n"
+        f"✨ Behind the Vibe\n"
+        f"This space was carefully crafted using AI to bring you the ultimate midnight sanctuary.\n"
+        f"Curated by: Leo\n"
+        f"Music Engine: Google AI Lyria 3\n"
+        f"Mood: Soft chillhop · Cyberpunk aesthetic · Rainy night ambient\n\n"
+        f"[Hashtag block: 10-15 hashtags including #lofi #cyberpunk #chillhop #aesthetic #lofigirl #lofihiphop #studymusic #sleepmusic #relaxingmusic #animestyle #neonblossom #midnightvibes]\n\n"
         f"TAGS: Provide 20 high-traffic YouTube search tags as a JSON array."
     )
     
