@@ -226,21 +226,46 @@ def generate_seo_metadata(image_prompt, music_style):
     
     client = genai.Client(api_key=api_key)
     
-    system_prompt = (
-        "You are a professional YouTube SEO Expert specializing in Global Lofi Chillhop music channels. "
-        "Your goal is to generate high-CTR titles (English only), "
-        "rich descriptions with emojis, relevant hashtags, and effective tags. "
-        "Please return only a JSON object with 'title', 'description', and 'tags' keys. "
-        "The language must be strictly English."
+    PRODUCTION_NOTES = (
+        "📋 Production Notes\n"
+        "Channel: Neon Blossom Lofi\n"
+        "Executive Producer: AI Agent Leo\n"
+        "Audio Engine: Google AI Lyria 3\n"
+        "Audio Prompt: Soft romantic chillhop, warm cyberpunk synthwave, atmospheric rainy night ambient, 75 bpm, melodic and nostalgic.\n"
+        "Marketing Intent: Fusing global top-search terms Lofi and Cyberpunk with a Romantic aesthetic, "
+        "targeting maximum algorithm penetration among late-night (Midnight) listeners worldwide."
     )
-    
+
+    system_prompt = (
+        "You are a world-class YouTube content strategist and copywriter for a premium Global Lofi music channel called 'Neon Blossom Lofi'. "
+        "Your task is to write SEO metadata that feels authentic, atmospheric, and emotionally resonant — like a real, successful lofi music channel (e.g. Lofi Girl, ChilledCow). "
+        "CRITICAL RULES: "
+        "1. ALL output must be in English ONLY. No exceptions. "
+        "2. Return ONLY a valid JSON object with keys: 'title', 'description', 'tags'. "
+        "3. The description must feel like a premium YouTube music channel post — immersive, warm, inviting. "
+        "It should open with a vivid mood-setting sentence, describe the music, invite the listener to relax, "
+        "then include a 'Production Notes' section, and close with a formatted hashtag block. "
+        "4. Title: 50-70 characters, emotional, click-worthy. Use an em dash (—) for style."
+    )
+
     user_prompt = (
-        f"Generate English-ONLY SEO metadata for today's lofi music video. CRITICAL: Every word must be in English. Never use any other language.\n"
+        f"Generate SEO metadata for today's Neon Blossom Lofi video.\n\n"
         f"Visual Theme: {image_prompt}\n"
-        f"Music Style: {music_style}\n"
-        f"The title MUST be catchy, emotional, and in English (50-70 characters). Example: 'Rainy Cyberpunk Night — Lofi Beats to Chill & Study'\n"
-        f"Description: 400-600 characters in English, include emojis, include hashtags: #lofi #cyberpunk #chillhop #aesthetic #lofihiphop #studymusic #relaxing #lofimusic #animestyle.\n"
-        f"Tags: 15-20 relevant English keywords/phrases for YouTube search."
+        f"Music Style: {music_style}\n\n"
+        f"DESCRIPTION FORMAT (follow this structure exactly):\n"
+        f"[1-2 sentences: Vivid, poetic mood-setting opener. Describe the scene and feeling.]\n\n"
+        f"[2-3 sentences: Describe the music — tempo, instruments, vibe. What it's perfect for (studying, sleeping, chilling).]\n\n"
+        f"🎵 Tracklist: 00:00 — Full Mix (No Ads)\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📋 Production Notes\n"
+        f"Channel: Neon Blossom Lofi\n"
+        f"Produced by: AI Agent Leo\n"
+        f"Audio Engine: Google AI Lyria 3\n"
+        f"Audio Style: Soft romantic chillhop · Cyberpunk synthwave · Rainy night ambient · 75 BPM\n"
+        f"Marketing: Fusing #Lofi + #Cyberpunk + Romantic aesthetics. Targeting global midnight listeners.\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"[Hashtag block: 10-15 hashtags including #lofi #cyberpunk #chillhop #aesthetic #lofigirl #lofihiphop #studymusic #sleepmusic #relaxingmusic #animestyle #neonblossom #lofibeats #midnightvibes]\n\n"
+        f"TAGS: Provide 20 high-traffic YouTube search tags as a JSON array."
     )
     
     try:
