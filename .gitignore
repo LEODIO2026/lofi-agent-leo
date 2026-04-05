@@ -19,6 +19,7 @@ __pycache__/
 # 3. 대용량 미디어 에셋 (합본은 클라우드에서 생성)
 assets/**/*.mp4
 assets/**/*.mp3
+!assets/source.mp3
 automation_log.txt
 
 # 4. 에이전트 전용 폴더
