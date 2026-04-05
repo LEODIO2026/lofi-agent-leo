@@ -232,8 +232,8 @@ def generate_seo_metadata(image_prompt, music_style):
         "Executive Producer: AI Agent Leo\n"
         "Audio Engine: Google AI Lyria 3\n"
         "Audio Prompt: Soft romantic chillhop, warm cyberpunk synthwave, atmospheric rainy night ambient, 75 bpm, melodic and nostalgic.\n"
-        "Marketing Intent: Fusing global top-search terms Lofi and Cyberpunk with a Romantic aesthetic, "
-        "targeting maximum algorithm penetration among late-night (Midnight) listeners worldwide."
+        "Creative Concept: Fusing global top-search terms Lofi and Cyberpunk with a Romantic aesthetic, "
+        "crafted specially for late-night (Midnight) listeners worldwide."
     )
 
     system_prompt = (
@@ -262,7 +262,7 @@ def generate_seo_metadata(image_prompt, music_style):
         f"Produced by: AI Agent Leo\n"
         f"Audio Engine: Google AI Lyria 3\n"
         f"Audio Style: Soft romantic chillhop · Cyberpunk synthwave · Rainy night ambient · 75 BPM\n"
-        f"Marketing: Fusing #Lofi + #Cyberpunk + Romantic aesthetics. Targeting global midnight listeners.\n"
+        f"Concept: Fusing #Lofi + #Cyberpunk + Romantic aesthetics. Crafted for global midnight listeners.\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"[Hashtag block: 10-15 hashtags including #lofi #cyberpunk #chillhop #aesthetic #lofigirl #lofihiphop #studymusic #sleepmusic #relaxingmusic #animestyle #neonblossom #lofibeats #midnightvibes]\n\n"
         f"TAGS: Provide 20 high-traffic YouTube search tags as a JSON array."
