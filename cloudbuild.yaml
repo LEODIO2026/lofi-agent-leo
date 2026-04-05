@@ -22,6 +22,10 @@ steps:
       - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/lofi-repo/lofi-agent'
       - '--region'
       - 'asia-northeast3'
+      - '--memory'
+      - '4Gi'
+      - '--cpu'
+      - '2'
       - '--execute-now' # 배포 즉시 1회 테스트 실행 (옵션)
 
 images:
