@@ -27,18 +27,20 @@ def generate_nano_banana_image():
     client = genai.Client(api_key=api_key)
     
     # 대표님 전용 '감성 정점' 테마 난수화 패턴 (보랏빛 감성 유지하며 디테일 변주)
-    weather = ["softly raining", "glowing neon mist", "light misty drizzle", "falling cherry blossoms in the rain"]
-    lighting_nuance = ["deep violet and indigo", "majestic magenta and purple", "cyan and soft lavender", "holographic pink and teal"]
+    weather = ["softly raining with petals drifting", "glowing neon mist and gentle drizzle", "light misty drizzle with bokeh sparkles", "falling cherry blossoms through rain and neon"]
+    lighting_nuance = ["deep violet and indigo with warm amber accents", "majestic magenta and soft purple", "cyan and tender lavender with golden rim light", "holographic pink and teal with dreamy haze"]
     
-    # [확정 테마] 아련한 눈빛 + 러블리 니트 가디건 + 보랏빛 빗줄기 발코니
+    # [확정 테마] 아련한 눈빛 + 러블리 니트 가디건 + 보랏빛 빗줄기 발코니 (Seamless Loop 최적화)
     prompt = (
         f"A masterpiece 16:9 cinematic illustration for a lofi music channel. "
-        f"A breathtakingly beautiful female anime protagonist with a wistful, soul-searching, and deeply emotional expression. "
-        f"She is wearing a lovely, oversized lavender-colored cozy knit cardigan, looking relaxed and reflective. "
-        f"She is leaning against a rainy, neon-lit balcony of a cyberpunk high-rise at night, holding a warm mug of steaming cocoa. "
-        f"In the background, a sprawling cyberpunk city with {random.choice(lighting_nuance)} neon bokeh and {random.choice(weather)}. "
-        f"Highly detailed raindrops on the railing, stunning lighting contrast between the warm interior glow and the cool exterior night. "
-        f"High-fidelity Japanese anime style (Makoto Shinkai/Kyoto Animation aesthetics), lyrical and nostalgic atmosphere. "
+        f"A breathtakingly beautiful female anime protagonist with a wistful, soul-searching, and deeply emotional expression, with a soft and lovely glow. "
+        f"She is wearing a lovely, oversized pastel-lavender cozy knit cardigan, looking relaxed and dreamily reflective. "
+        f"She is leaning against a rain-soaked neon-lit balcony of a cyberpunk high-rise at night, holding a warm steaming mug. "
+        f"Around her, a few glowing fireflies and floating petals add a magical, lovely atmosphere. "
+        f"In the background, a sprawling cyberpunk city with {random.choice(lighting_nuance)} neon bokeh, gentle {random.choice(weather)}. "
+        f"The composition is perfectly symmetrical and visually seamless, designed for infinite looping. "
+        f"Highly detailed raindrops on the railing, stunning contrast between warm interior glow and cool night outside. "
+        f"High-fidelity Japanese anime style (Makoto Shinkai/Kyoto Animation aesthetics), lyrical, nostalgic, and emotionally resonant. "
         f"No provocative elements, peak emotional resonance. No text."
     )
     
@@ -87,7 +89,15 @@ def generate_veo_video(image_path):
     
     first_image = types.Image(image_bytes=img_bytes, mime_type="image/png")
     
-    prompt = "A cinematic, haunting background. Rain falling slowly against a cinematic romantic cyberpunk city, neon glowing mist. Soft lights flickering. Lofi chillhop animation style loop."
+    prompt = (
+        "A seamless looping cinematic short clip for a lofi music channel. "
+        "A cozy cyberpunk balcony at night with soft violet and pink neon reflections on rain-soaked glass. "
+        "Gentle rain falls romantically, cherry blossom petals drift slowly in the breeze. "
+        "A beautiful anime girl in a lavender knit cardigan sips from a warm mug, her eyes reflecting the dreamy neon city below. "
+        "Tiny glowing fireflies float near her. The scene is deeply emotional, incredibly lovely, and tender. "
+        "The animation is smooth and perfectly designed to loop without any visible cut or transition. "
+        "Soft cinematic grain, warm bokeh, lofi chillhop animation aesthetics. Seamless loop."
+    )
     
     print("[Agent Leo] 구글 데이터센터에 Veo 3 비디오 렌더링을 요청합니다. (수 분 소요)")
     try:
@@ -117,20 +127,29 @@ def apply_ken_burns(image_path, duration):
     """
     정지 이미지에 미세한 줌인(Zoom-in) 효과를 주어 영화 같은 느낌을 부여합니다. (Ken Burns Effect)
     비용 0원으로 프리미엄 감성을 유지하는 핵심 로직입니다.
+    루프 지점에서 자연스럽게 이어지도록 Ease-in/out 줌을 적용합니다.
     """
-    print(f"[Agent Leo] 시네마틱 Ken Burns 효과 적용 중 (0원 모드)...")
+    from moviepy.editor import concatenate_videoclips
+    print(f"[Agent Leo] 시네마틱 Ken Burns 루핑 효과 적용 중 (Seamless Loop)...")
     
-    # 30초 단위의 시네마틱 줌 루프 생성 (해상도 저하 방지)
-    loop_dur = 30 
-    
-    # 이미지 로드
+    loop_dur = 30
     clip = ImageClip(image_path).set_duration(loop_dur)
+    # 1.0에서 1.08로 아주 천천히 확대 (처음과 끝이 비슷한 줌 레벨이 되도록)
+    clip = clip.resize(lambda t: 1 + 0.08 * (t / loop_dur))
     
-    # 1.0배에서 1.1배로 아주 천천히 확대
-    clip = clip.resize(lambda t: 1 + 0.1 * (t / loop_dur))
+    # 전체 오디오 길이에 맞춰 크로스페이드로 부드럽게 루핑
+    crossfade_dur = 2.0
+    clips = []
+    total = 0
+    while total < duration:
+        c = ImageClip(image_path).set_duration(min(loop_dur, duration - total))
+        c = c.resize(lambda t: 1 + 0.08 * (t / loop_dur))
+        if clips:
+            c = c.crossfadein(crossfade_dur)
+        clips.append(c)
+        total += loop_dur - crossfade_dur
     
-    # 전체 오디오 길이에 맞춰 무한 루프
-    final_clip = vfx.loop(clip, duration=duration)
+    final_clip = concatenate_videoclips(clips, method="compose", padding=-crossfade_dur)
     return final_clip
 
 def generate_lyria_music():
@@ -216,11 +235,12 @@ def generate_seo_metadata(image_prompt, music_style):
     )
     
     user_prompt = (
-        f"Generate English-only SEO metadata for today's lofi video.\n"
+        f"Generate English-ONLY SEO metadata for today's lofi music video. CRITICAL: Every word must be in English. Never use any other language.\n"
         f"Visual Theme: {image_prompt}\n"
         f"Music Style: {music_style}\n"
-        f"Include global hashtags (#lofi, #cyberpunk, #chillhop, #aesthetic, etc.) in the description.\n"
-        f"Title should be around 50-70 characters. Description should be around 500 characters."
+        f"The title MUST be catchy, emotional, and in English (50-70 characters). Example: 'Rainy Cyberpunk Night — Lofi Beats to Chill & Study'\n"
+        f"Description: 400-600 characters in English, include emojis, include hashtags: #lofi #cyberpunk #chillhop #aesthetic #lofihiphop #studymusic #relaxing #lofimusic #animestyle.\n"
+        f"Tags: 15-20 relevant English keywords/phrases for YouTube search."
     )
     
     try:
@@ -302,9 +322,20 @@ def generate_video():
         audio_clip = AudioFileClip(audio_path)
         
         if veo_path and os.path.exists(veo_path):
-            print("[Agent Leo] Veo 3 MP4 소스를 로드하고 배경음악 길이에 맞춰 무한 루핑합니다.")
+            print("[Agent Leo] Veo MP4 소스를 로드하고 크로스페이드로 자연스럽게 무한 루핑합니다.")
+            from moviepy.editor import concatenate_videoclips
             base_clip = VideoFileClip(veo_path)
-            visual_clip = base_clip.fx(vfx.loop, duration=audio_clip.duration)
+            veo_dur = base_clip.duration
+            crossfade_dur = min(1.5, veo_dur * 0.2)  # 클립 길이의 20% 또는 최대 1.5초
+            clips = []
+            total = 0
+            while total < audio_clip.duration:
+                c = VideoFileClip(veo_path).subclip(0, min(veo_dur, audio_clip.duration - total))
+                if clips:
+                    c = c.crossfadein(crossfade_dur)
+                clips.append(c)
+                total += veo_dur - crossfade_dur
+            visual_clip = concatenate_videoclips(clips, method="compose", padding=-crossfade_dur)
         else:
             # Option B: 초저비용 시네마틱 모션 적용
             visual_clip = apply_ken_burns(image_path, audio_clip.duration)
