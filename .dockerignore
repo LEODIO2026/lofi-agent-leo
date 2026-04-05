@@ -10,4 +10,8 @@ credentials.json
 .agent/
 .gemini/
 *.log
+# 3. 대용량 미디어 에셋 (합본은 클라우드에서 생성)
+assets/**/*.mp4
+# assets/**/*.mp3 (폴백용 source.mp3 포함을 위해 주석 처리)
+assets/**/!(*source).mp3
 automation_log.txt
