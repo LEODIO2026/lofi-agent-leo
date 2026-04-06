@@ -6,3 +6,4 @@ moviepy==1.0.3
 Pillow
 google-genai
 google-cloud-secret-manager
+numpy

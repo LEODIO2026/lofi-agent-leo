@@ -30,15 +30,15 @@ def generate_nano_banana_image():
     weather = ["softly raining with petals drifting", "glowing neon mist and gentle drizzle", "light misty drizzle with bokeh sparkles", "falling cherry blossoms through rain and neon"]
     lighting_nuance = ["deep violet and indigo with warm amber accents", "majestic magenta and soft purple", "cyan and tender lavender with golden rim light", "holographic pink and teal with dreamy haze"]
     
-    # [확정 테마] 아련한 눈빛 + 러블리 니트 가디건 + 보랏빛 빗줄기 발코니 (Seamless Loop 최적화)
+    # [확정 테마] 아련한 눈빛 + 러블리 니트 가디건 + 보랏빛 빗줄기 발코니 (애니메이션 최적화)
     prompt = (
         f"A masterpiece 16:9 cinematic illustration for a lofi music channel. "
-        f"A breathtakingly beautiful female anime protagonist with a wistful, soul-searching, and deeply emotional expression, with a soft and lovely glow. "
-        f"She is wearing a lovely, oversized pastel-lavender cozy knit cardigan, looking relaxed and dreamily reflective. "
-        f"She is leaning against a rain-soaked neon-lit balcony of a cyberpunk high-rise at night, holding a warm steaming mug. "
+        f"A breathtakingly beautiful female anime protagonist with a wistful, soul-searching expression, soft and lovely glow. "
+        f"She is wearing a lovely, oversized pastel-lavender cozy knit cardigan, her hair softly swaying. "
+        f"She is leaning against a rain-soaked neon-lit balcony of a cyberpunk high-rise at night, holding a warm mug. "
+        f"The subject is clearly separated from the background to allow for dynamic animation. "
         f"Around her, a few glowing fireflies and floating petals add a magical, lovely atmosphere. "
         f"In the background, a sprawling cyberpunk city with {random.choice(lighting_nuance)} neon bokeh, gentle {random.choice(weather)}. "
-        f"The composition is perfectly symmetrical and visually seamless, designed for infinite looping. "
         f"Highly detailed raindrops on the railing, stunning contrast between warm interior glow and cool night outside. "
         f"High-fidelity Japanese anime style (Makoto Shinkai/Kyoto Animation aesthetics), lyrical, nostalgic, and emotionally resonant. "
         f"No provocative elements, peak emotional resonance. No text."
@@ -90,13 +90,15 @@ def generate_veo_video(image_path):
     first_image = types.Image(image_bytes=img_bytes, mime_type="image/png")
     
     prompt = (
-        "A seamless looping cinematic short clip for a lofi music channel. "
-        "A cozy cyberpunk balcony at night with soft violet and pink neon reflections on rain-soaked glass. "
-        "Gentle rain falls romantically, cherry blossom petals drift slowly in the breeze. "
-        "A beautiful anime girl in a lavender knit cardigan sips from a warm mug, her eyes reflecting the dreamy neon city below. "
-        "Tiny glowing fireflies float near her. The scene is deeply emotional, incredibly lovely, and tender. "
-        "The animation is smooth and perfectly designed to loop without any visible cut or transition. "
-        "Soft cinematic grain, warm bokeh, lofi chillhop animation aesthetics. Seamless loop."
+        "A hyper-dynamic and seamless looping cinematic animation for a lofi music channel. "
+        "The beautiful girl in the lavender cardigan is alive: she slowly blinks her eyes, her hair sways gently in the breeze, "
+        "and she takes a slow, deep breath, her shoulders moving up and down slightly. "
+        "She gently tilts her head while looking at the neon city, then slowly returns to her exact initial posture. "
+        "Steam rises from the mug in a beautiful swirling motion. "
+        "Rain falls in the background with glowing neon reflections. "
+        "CRITICAL: The animation MUST start and end with the exact same pose to ensure a perfect, invisible loop. "
+        "The movement should be rich, fluid, and emotionally expressive. "
+        "Lofi chillhop aesthetics, dreamy bokeh, masterpiece quality."
     )
     
     print("[Agent Leo] 구글 데이터센터에 Veo 3 비디오 렌더링을 요청합니다. (수 분 소요)")
@@ -125,25 +127,30 @@ def generate_veo_video(image_path):
 
 def apply_ken_burns(image_path, duration):
     """
-    정지 이미지에 미세한 줌인(Zoom-in) 효과를 주어 영화 같은 느낌을 부여합니다. (Ken Burns Effect)
-    비용 0원으로 프리미엄 감성을 유지하는 핵심 로직입니다.
-    루프 지점에서 자연스럽게 이어지도록 Ease-in/out 줌을 적용합니다.
+    정지 이미지에 '숨쉬는 듯한(Breathing)' 줌 효과를 주어 생동감을 부여합니다.
+    단순 선형 줌이 아닌, Sine 파동을 이용한 부드러운 전진/후진 모션을 적용합니다.
     """
+    import numpy as np
     from moviepy.editor import concatenate_videoclips
-    print(f"[Agent Leo] 시네마틱 Ken Burns 루핑 효과 적용 중 (Seamless Loop)...")
+    print(f"[Agent Leo] 시네마틱 'Breathing' 루핑 효과 적용 중 (0원 모드 전용)...")
     
-    loop_dur = 30
+    loop_dur = 20 # 20초 단위의 숨쉬는 루프
+    
+    def zoom_func(t):
+        # 1.0에서 1.05 사이를 부드럽게 오가는 Sine 파동 줌
+        zoom = 1.0 + 0.025 * (1 - np.cos(2 * np.pi * t / loop_dur))
+        return zoom
+
     clip = ImageClip(image_path).set_duration(loop_dur)
-    # 1.0에서 1.08로 아주 천천히 확대 (처음과 끝이 비슷한 줌 레벨이 되도록)
-    clip = clip.resize(lambda t: 1 + 0.08 * (t / loop_dur))
+    clip = clip.resize(zoom_func)
     
-    # 전체 오디오 길이에 맞춰 크로스페이드로 부드럽게 루핑
-    crossfade_dur = 2.0
+    # 전체 오디오 길이에 맞춰 크로스페이드로 루핑
+    crossfade_dur = 1.0
     clips = []
     total = 0
     while total < duration:
         c = ImageClip(image_path).set_duration(min(loop_dur, duration - total))
-        c = c.resize(lambda t: 1 + 0.08 * (t / loop_dur))
+        c = c.resize(zoom_func)
         if clips:
             c = c.crossfadein(crossfade_dur)
         clips.append(c)
