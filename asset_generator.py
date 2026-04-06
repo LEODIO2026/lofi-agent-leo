@@ -26,38 +26,102 @@ def generate_nano_banana_image():
     
     client = genai.Client(api_key=api_key)
     
-    # 대표님 전용 '감성 정점' 테마 난수화 패턴 (보랏빛 감성 유지하며 디테일 변주)
-    weather = ["softly raining with petals drifting", "glowing neon mist and gentle drizzle", "light misty drizzle with bokeh sparkles", "falling cherry blossoms through rain and neon"]
-    lighting_nuance = ["deep violet and indigo with warm amber accents", "majestic magenta and soft purple", "cyan and tender lavender with golden rim light", "holographic pink and teal with dreamy haze"]
-    
-    # [다이내믹 프로젝트] 홈 로파이 테마 씬 리스트
+    # =======================================================
+    # 새 컨셉: 고양이를 좋아하는 여자의 하루 일과
+    # 스타일: 80~90년대 클래식 일본 애니메이션 감성
+    # (키마구레 오렌지로드 / 메종일각 / 초기 지브리)
+    # 무드: 로맨스, 아련함, 그리움, 설레임
+    # =======================================================
+
+    ART_STYLE = (
+        "Classic 1980s-1990s Japanese anime art style, similar to Kimagure Orange Road, Maison Ikkoku, and early Studio Ghibli. "
+        "Clean, expressive line art with soft cel-shading. Warm, slightly desaturated color palette with gentle film grain. "
+        "Big, soulful eyes filled with deep emotion. Soft lighting, natural and lived-in everyday environments. "
+        "NO cyberpunk, NO neon signs, NO sci-fi elements. Purely warm, nostalgic, everyday Japanese aesthetic. "
+        "16:9 cinematic composition. No text in the image."
+    )
+
+    lighting = random.choice([
+        "soft morning light filtering through white curtains",
+        "golden afternoon sunlight casting long gentle shadows",
+        "overcast rainy day with gentle diffused grey light",
+        "warm sunset glow through a wooden window frame",
+        "quiet blue dusk with a single desk lamp lit",
+        "early spring light with cherry blossom petals drifting softly",
+    ])
+
     scenes = [
-        # 1. 침대 위 (Midnight Bedroom)
-        "She is burrowed in soft, plush lavender bedding on a large bed, holding a warm steaming mug. She is looking at a floating holographic interface, or gazing out a large circular window at a violet neon cityscape at night. Cozy and intimate.",
-        # 2.거실 쇼파 (Neon Living Room)
-        "She is relaxing deeply on a plush, futuristic dark-grey sofa in a spacious living room, with a steaming mug on the side table. Surrounded by soft-glowing cybernetic indoor plants. A sleek digital record player spins in the corner. Tranquil and serene.",
-        # 3. 벽난로 앞 (Cyber Fireplace)
-        "She is sitting on a fluffy rug in front of a modern electric fireplace with dancing lavender and blue flames. She is holding a warm mug and looking pensively at the fire. Warm and soul-searching.",
-        # 4. 식탁/주방 (Rainy Dining Table)
-        "She is sitting at a minimalist black marble dining table with a steaming cup of tea. Through a massive floor-to-ceiling window behind her, a heavy neon-lit downpour is visible. Melancholic and beautiful.",
-        # 5. 창가 쉼터 (Window Nook)
-        "She is perched on a deep, cushioned windowsill of a high-rise, holding a warm mug. Her forehead is gently pressed against the cold, rain-streaked glass as she watches the flying cars and neon signs below. Cinematic and nostalgic."
+        # 1. 아침: 침대에서 눈을 뜨는 그녀
+        (
+            "A young woman slowly waking up in a cozy single bed, her dark hair fanned across the pillow. "
+            "Her fluffy grey-and-white cat is sitting on her chest, staring at her with golden eyes. "
+            "White curtains billow softly. A small alarm clock, stacked books, and a cat plushie sit on the nightstand.",
+            "waking up with her cat, cozy morning bedroom, warm and drowsy"
+        ),
+        # 2. 아침: 화장실에서 세수하는 그녀
+        (
+            "A young woman leaning over a small bathroom sink, splashing water on her face. "
+            "Her cat perches on the edge of the sink, watching curiously with tilted head. "
+            "A toothbrush in a cup, a small potted plant, and a soft towel are visible. "
+            "Her reflection in the round mirror shows a sleepy, gentle face. Soft morning light through a frosted window.",
+            "morning routine, cat watching, bathroom mirror, sleepy and gentle"
+        ),
+        # 3. 아침식사: 혼자서 먹는 토스트
+        (
+            "A young woman sitting alone at a small wooden kitchen table, eating toast and drinking warm tea. "
+            "Her cat sits on the chair beside her, watching her eat with hopeful eyes. "
+            "A window shows quiet morning street scenery with a bicycle outside. She looks peaceful and slightly lost in thought.",
+            "breakfast alone, cat companion, morning kitchen, quiet and cozy"
+        ),
+        # 4. 통학: 전철을 기다리는 그녀
+        (
+            "A young woman standing alone on a quiet train platform, holding her school bag straps and looking down the tracks. "
+            "A small cat keychain swings from her bag. Her expression is thoughtful and slightly lonely. "
+            "Cherry blossoms drift past. Other commuters are softly blurred in the background.",
+            "waiting for the train, station platform, pensive and nostalgic"
+        ),
+        # 5. 설레임: 우연히 마주친 썸남
+        (
+            "A young woman frozen mid-step on a narrow residential street, her eyes wide and cheeks flushed pink. "
+            "A young man across the way has just looked up from his book and their eyes have unexpectedly met. "
+            "Cherry blossom petals fall gently between them. Time seems to have stopped. Her cat charm swings from her bag. "
+            "The moment is electric, tender, and fleeting.",
+            "unexpected eye contact with a crush, heart flutter, romantic and shy"
+        ),
+        # 6. 학교: 수업 중 딴 생각에 잠긴 그녀
+        (
+            "A young woman sitting at a school desk, her chin resting on one hand. "
+            "She is gazing dreamily out the classroom window at the sky and cherry blossoms, completely lost in her own world. "
+            "Her open notebook has a small cat doodle in the corner. The teacher writes on the blackboard in the soft background. "
+            "The afternoon light falls warmly across her face.",
+            "daydreaming in class, looking out the window, nostalgic school scene"
+        ),
+        # 7. 저녁: 집으로 걸어오는 그녀
+        (
+            "A young woman walking home alone in the early evening, earbuds in, hands tucked in her jacket pockets. "
+            "A stray cat walks beside her along the low stone wall of a quiet residential street. "
+            "The sky is a deep orange and lilac gradient. She has a soft, bittersweet expression, as if thinking of someone.",
+            "walking home at dusk, stray cat companion, bittersweet and wistful"
+        ),
+        # 8. 심야: 창가에 앉아 감성에 빠진 그녀
+        (
+            "A young woman sitting on a window ledge at night, her cat curled warmly in her lap. "
+            "She is looking out at the quiet neighbourhood below, a cup of warm tea held in both hands. "
+            "The room behind her is dim and intimate with a desk lamp, stacked books, and a small cat figurine on the shelf. "
+            "Her expression is soft, longing, and deeply emotional.",
+            "late night by the window, cat in lap, warm tea, longing and emotional"
+        ),
     ]
-    
-    selected_scene = random.choice(scenes)
-    
-    # [확정 테마] 선택된 장면 + 고정 스타일 가이드 (애니메이션 최적화)
+
+    selected_scene, scene_mood = random.choice(scenes)
+
     prompt = (
-        f"A masterpiece 16:9 cinematic illustration for a lofi music channel. "
-        f"A breathtakingly beautiful female anime protagonist with a wistful, soul-searching expression, soft and lovely glow. "
-        f"She is wearing a lovely, oversized pastel-lavender cozy knit cardigan, her hair softly swaying. "
-        f"{selected_scene} "
-        f"The subject is clearly separated from the background to allow for dynamic animation. "
-        f"Around her, a few glowing fireflies and floating petals add a magical, lovely atmosphere. "
-        f"In the background, a sprawling cyberpunk city with {random.choice(lighting_nuance)} neon bokeh, gentle {random.choice(weather)}. "
-        f"Highly detailed raindrops on the glass and surfaces, stunning contrast between warm interior glow and cool night outside. "
-        f"High-fidelity Japanese anime style (Makoto Shinkai/Kyoto Animation aesthetics), lyrical, nostalgic, and emotionally resonant. "
-        f"No provocative elements, peak emotional resonance. No text."
+        f"{ART_STYLE} "
+        f"Scene: {selected_scene} "
+        f"Lighting: {lighting}. "
+        f"Mood: {scene_mood}. "
+        f"The girl has dark shoulder-length hair, big expressive eyes, and a warm, gentle presence. "
+        f"The cat has a distinctive, adorable design and appears as her constant companion."
     )
     
     print(f"[Agent Leo] 오늘의 테마 프롬프트 추출 완료:\n  -> {prompt}")
@@ -75,8 +139,8 @@ def generate_nano_banana_image():
             if part.inline_data is not None:
                 image = part.as_image()
                 image.save(image_path)
-                print(f"[Agent Leo] Nano Banana 2 이미지 생성 완료 및 다운로드 성공: {image_path}")
-                return image_path, prompt
+                print(f"[Agent Leo] 이미지 생성 완료: {image_path}")
+                return image_path, prompt, scene_mood
                 
         raise Exception("API 응답에서 생성된 이미지 데이터를 찾지 못했습니다.")
         
@@ -84,9 +148,10 @@ def generate_nano_banana_image():
         print(f"[Error] Nano Banana 이미지 생성 실패: {e}")
         # 생성 서버 에러 시 기존 V2 백업용 배너로 폴백(Fallback) 안전장치
         fallback_path = "assets/branding/Neon_Blossom_Banner.png"
-        fallback_prompt = "A cozy lofi cyberpunk balcony during a violet rain."
-        print("[Agent Leo] 통신 장애로 대체 백업용 기존 배너를 활용합니다.")
-        return fallback_path, fallback_prompt
+        fallback_prompt = "A girl sitting by the window with her cat, holding warm tea, nostalgic and soft."
+        fallback_mood = "nostalgic and warm"
+        print("[Agent Leo] 이미지 생성 실패. 폴백 배너를 사용합니다.")
+        return fallback_path, fallback_prompt, fallback_mood
 
 def generate_veo_video(image_path):
     print("\n[Agent Leo] Veo 3 모델을 통한 비디오 렌더링을 준비합니다...")
@@ -106,15 +171,15 @@ def generate_veo_video(image_path):
     first_image = types.Image(image_bytes=img_bytes, mime_type="image/png")
     
     prompt = (
-        "A hyper-dynamic and seamless looping cinematic animation for a lofi music channel. "
-        "The beautiful girl in the lavender cardigan is alive: she slowly blinks her eyes, her hair sways gently in the breeze, "
-        "and she takes a slow, deep breath, her shoulders moving up and down slightly. "
-        "She gently tilts her head while looking at the neon city, then slowly returns to her exact initial posture. "
-        "Steam rises from the mug in a beautiful swirling motion. "
-        "Rain falls in the background with glowing neon reflections. "
-        "CRITICAL: The animation MUST start and end with the exact same pose to ensure a perfect, invisible loop. "
-        "The movement should be rich, fluid, and emotionally expressive. "
-        "Lofi chillhop aesthetics, dreamy bokeh, masterpiece quality."
+        "A seamless looping cinematic animation in classic 1980s-1990s Japanese anime style (Kimagure Orange Road, early Studio Ghibli). "
+        "The girl is gently alive: she blinks slowly, her dark hair sways softly in the breeze, "
+        "and her shoulders rise and fall with a quiet, deep breath. "
+        "If she has a cat, its tail flicks lazily and one ear twitches. "
+        "If she holds a cup of tea, a soft wisp of steam curls upward. "
+        "If she is near a window, the curtains billow very gently. "
+        "CRITICAL: The animation MUST start and end with the EXACT same pose for a perfect, invisible seamless loop. "
+        "All movement is subtle, tender, and emotionally expressive - like a living watercolor painting. "
+        "Warm, nostalgic Japanese lofi animation aesthetics. Masterpiece quality."
     )
     
     print("[Agent Leo] 구글 데이터센터에 Veo 3 비디오 렌더링을 요청합니다. (수 분 소요)")
@@ -275,15 +340,14 @@ def generate_seo_metadata(scene_description, music_prompt):
     client = genai.Client(api_key=api_key)
     
     system_prompt = (
-        "You are a poetic, emotionally intelligent Native English copywriter for a premium Global Lofi music channel called 'Neon Blossom Lofi'. "
-        "Your task is to write SEO metadata that feels deeply authentic, atmospheric, and emotionally resonant. "
+        "You are a poetic, emotionally intelligent Native English copywriter for a cozy, romantic lofi music channel called 'Neon Blossom Lofi'. "
+        "The channel follows a young woman who loves cats through her daily life: mornings, commutes, school, chance encounters with a crush, quiet evenings. "
+        "The overall feeling is: romance, wistfulness, longing, and gentle flutter. Like reading someone's diary. "
         "CRITICAL RULES: "
         "1. ALL output MUST be strictly in 100% English. DO NOT output any Korean (한국어) under any circumstances. "
         "2. Return ONLY a valid JSON object with keys: 'title', 'description', 'tags'. "
-        "3. The description must feel like a personal, artistic diary entry or a warm invitation to relax. "
-        "It should NEVER sound corporate, commercial, or like a marketing pitch. "
-        "Include a vivid mood-setting story, describe the chillhop vibe, and gently mention the AI tools used as 'Creative Process'. "
-        "4. Title: 50-70 characters, emotional, click-worthy in English. Use an em dash (—) for style."
+        "3. The description must read like a tender, poetic moment from the girl's day — personal and warm, NEVER corporate or AI-sounding. "
+        "4. Title: 50-70 characters, emotionally resonant English. Use an em dash (—) for style."
     )
 
     user_prompt = (
@@ -400,7 +464,7 @@ def generate_video():
         sys.exit(1)
 
     # 1. Nano Banana를 통한 최초 1회 동적 이미지 생성
-    image_path, visual_prompt = generate_nano_banana_image()
+    image_path, visual_prompt, scene_mood = generate_nano_banana_image()
     
     if not os.path.exists(image_path):
         print(f"[Error] {image_path} 배너 이미지가 없습니다.")
