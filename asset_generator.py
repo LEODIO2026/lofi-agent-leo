@@ -542,11 +542,10 @@ def generate_seo_metadata(scene_description, music_prompt):
         
         metadata_json = json.loads(response.text)
         
-        # 최적 업로드 시간 예약 (오늘 저녁 9시 기준)
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        # 오늘 21:00 (KST 기준)으로 설정
-        publish_time = now.replace(hour=21, minute=0, second=0, microsecond=0)
+        # 글로벌(미국/유럽) 로파이 피크 타임 타겟팅
+        # KST 12:00 (낮) = UTC 03:00 = EST 22:00 (미국 동부 밤 10시)
+        # 미국인들이 자기 전 로파이를 가장 많이 찾는 황금 시간대입니다.
+        publish_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
         if publish_time < now:
             publish_time += timedelta(days=1)
         
@@ -568,9 +567,8 @@ def generate_seo_metadata(scene_description, music_prompt):
     except Exception as e:
         print(f"[Error] AI SEO 생성 실패: {e}")
         print("[Agent Leo] 폴백: 안전한 영어 기본값을 대신 저장합니다.")
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        publish_time = now.replace(hour=21, minute=0, second=0, microsecond=0)
+        # 폴백 시에도 글로벌 타겟 시간(KST 12:00/EST 10:00 PM) 동일 적용
+        publish_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
         if publish_time < now:
             publish_time += timedelta(days=1)
         publish_at_utc = (publish_time - timedelta(hours=9)).strftime("%Y-%m-%dT%H:%M:%SZ")
