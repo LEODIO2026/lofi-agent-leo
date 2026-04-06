@@ -316,7 +316,37 @@ def generate_seo_metadata(image_prompt, music_style):
         
     except Exception as e:
         print(f"[Error] AI SEO 생성 실패: {e}")
-        return None
+        print("[Agent Leo] 폴백: 안전한 영어 기본값을 대신 저장합니다.")
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        publish_time = now.replace(hour=21, minute=0, second=0, microsecond=0)
+        if publish_time < now:
+            publish_time += timedelta(days=1)
+        publish_at_utc = (publish_time - timedelta(hours=9)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        fallback = {
+            "title": "Rainy Night in Neon City — Lofi Beats to Chill & Dream",
+            "description": (
+                "The rain taps softly against the window as neon signs blur into the wet streets below. "
+                "You don’t need to be anywhere tonight — just here, breathing, resting.\n\n"
+                "A gentle blend of 75 BPM chillhop, warm synths, and distant vinyl crackle. "
+                "The perfect companion for late-night studying, slow evenings, or drifting off to sleep.\n\n"
+                "🎵 Tracklist: 00:00 — Full Mix (No Ads)\n\n"
+                "✨ Behind the Vibe\n"
+                "This space was carefully crafted to bring you the ultimate midnight sanctuary.\n"
+                "Curated by: Leo\n"
+                "Music Engine: Google AI Lyria 3\n"
+                "Mood: Soft chillhop · Cyberpunk aesthetic · Rainy night ambient\n\n"
+                "#lofi #cyberpunk #chillhop #aesthetic #lofigirl #studymusic #sleepmusic #neonblossom #midnightvibes"
+            ),
+            "tags": ["lofi", "chillhop", "cyberpunk lofi", "study music", "sleep music", "lofi beats",
+                     "neon blossom lofi", "midnight vibes", "anime lofi", "lo-fi chill",
+                     "lofi girl", "rainy lofi", "coding music", "focus music", "calm music"],
+            "publishAt": publish_at_utc
+        }
+        import json as _json
+        with open("assets/metadata_01.json", 'w', encoding='utf-8') as f:
+            _json.dump(fallback, f, ensure_ascii=False, indent=2)
+        return "assets/metadata_01.json"
 
 def generate_video():
     print("="*60)
