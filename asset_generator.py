@@ -387,12 +387,13 @@ def generate_video():
     audio_path = "assets/source.mp3"
     
     # 0. Lyria 3를 통한 무인 음악 작곡 체인
-    generated_audio_path = generate_lyria_music()
+    generated_audio_path, music_prompt = generate_lyria_music()
     if generated_audio_path and os.path.exists(generated_audio_path):
         audio_path = generated_audio_path
-        print("[Agent Leo] Lyria 3 앨범이 완성되어 오늘의 배경음악으로 채택되었습니다.")
+        print("✅ [Agent Leo] Lyria 3 음악 생성 완료. SEO에 음악 분위기 연결됩니다.")
     else:
-        print("[Agent Leo] 음악 생성 제한 혹은 오류로 인해 기존 백업 오디오(source.mp3)를 폴백합니다.")
+        print("[Agent Leo] 음악 생성 실패. 백업 오디오(source.mp3)를 폴백합니다.")
+
     
     if not os.path.exists(audio_path):
         print(f"[Error] {audio_path} 오디오 소스가 없습니다. 먼저 넣어주세요.")
