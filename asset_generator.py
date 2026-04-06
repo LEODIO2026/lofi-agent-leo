@@ -30,16 +30,32 @@ def generate_nano_banana_image():
     weather = ["softly raining with petals drifting", "glowing neon mist and gentle drizzle", "light misty drizzle with bokeh sparkles", "falling cherry blossoms through rain and neon"]
     lighting_nuance = ["deep violet and indigo with warm amber accents", "majestic magenta and soft purple", "cyan and tender lavender with golden rim light", "holographic pink and teal with dreamy haze"]
     
-    # [확정 테마] 아련한 눈빛 + 러블리 니트 가디건 + 보랏빛 빗줄기 발코니 (애니메이션 최적화)
+    # [다이내믹 프로젝트] 홈 로파이 테마 씬 리스트
+    scenes = [
+        # 1. 침대 위 (Midnight Bedroom)
+        "She is burrowed in soft, plush lavender bedding on a large bed, holding a warm steaming mug. She is looking at a floating holographic interface, or gazing out a large circular window at a violet neon cityscape at night. Cozy and intimate.",
+        # 2.거실 쇼파 (Neon Living Room)
+        "She is relaxing deeply on a plush, futuristic dark-grey sofa in a spacious living room, with a steaming mug on the side table. Surrounded by soft-glowing cybernetic indoor plants. A sleek digital record player spins in the corner. Tranquil and serene.",
+        # 3. 벽난로 앞 (Cyber Fireplace)
+        "She is sitting on a fluffy rug in front of a modern electric fireplace with dancing lavender and blue flames. She is holding a warm mug and looking pensively at the fire. Warm and soul-searching.",
+        # 4. 식탁/주방 (Rainy Dining Table)
+        "She is sitting at a minimalist black marble dining table with a steaming cup of tea. Through a massive floor-to-ceiling window behind her, a heavy neon-lit downpour is visible. Melancholic and beautiful.",
+        # 5. 창가 쉼터 (Window Nook)
+        "She is perched on a deep, cushioned windowsill of a high-rise, holding a warm mug. Her forehead is gently pressed against the cold, rain-streaked glass as she watches the flying cars and neon signs below. Cinematic and nostalgic."
+    ]
+    
+    selected_scene = random.choice(scenes)
+    
+    # [확정 테마] 선택된 장면 + 고정 스타일 가이드 (애니메이션 최적화)
     prompt = (
         f"A masterpiece 16:9 cinematic illustration for a lofi music channel. "
         f"A breathtakingly beautiful female anime protagonist with a wistful, soul-searching expression, soft and lovely glow. "
         f"She is wearing a lovely, oversized pastel-lavender cozy knit cardigan, her hair softly swaying. "
-        f"She is leaning against a rain-soaked neon-lit balcony of a cyberpunk high-rise at night, holding a warm mug. "
+        f"{selected_scene} "
         f"The subject is clearly separated from the background to allow for dynamic animation. "
         f"Around her, a few glowing fireflies and floating petals add a magical, lovely atmosphere. "
         f"In the background, a sprawling cyberpunk city with {random.choice(lighting_nuance)} neon bokeh, gentle {random.choice(weather)}. "
-        f"Highly detailed raindrops on the railing, stunning contrast between warm interior glow and cool night outside. "
+        f"Highly detailed raindrops on the glass and surfaces, stunning contrast between warm interior glow and cool night outside. "
         f"High-fidelity Japanese anime style (Makoto Shinkai/Kyoto Animation aesthetics), lyrical, nostalgic, and emotionally resonant. "
         f"No provocative elements, peak emotional resonance. No text."
     )
