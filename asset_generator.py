@@ -180,25 +180,50 @@ def generate_lyria_music():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         print("[Error] GEMINI_API_KEY가 없습니다.")
-        return None
+        return None, "soft piano lofi chillhop, 75 BPM"
         
     from google import genai
     from google.genai import types
     
     client = genai.Client(api_key=api_key)
     
-    instruments = ["soft piano and distant vinyl crackle", "warm electric guitar and smooth synth pads", "chill xylophone and acoustic guitar", "deep bass and airy flute"]
-    beat_style = ["steady boom-bap drums", "relaxed chillhop beat", "slow ambient percussion", "rhythmic jazz-hop drums"]
+    instruments = [
+        "soft piano and distant vinyl crackle",
+        "warm electric guitar and smooth synth pads",
+        "chill xylophone and acoustic guitar",
+        "deep bass and airy flute",
+        "mellow trumpet and soft electric piano",
+        "lo-fi guitar and warm cello"
+    ]
+    beat_style = [
+        "steady boom-bap drums",
+        "relaxed chillhop beat",
+        "slow ambient percussion",
+        "rhythmic jazz-hop drums",
+        "brushed snare and gentle hi-hats"
+    ]
+    mood_tag = random.choice([
+        "melancholic and introspective",
+        "warm and nostalgic",
+        "dreamy and romantic",
+        "peaceful and meditative",
+        "bittersweet and tender"
+    ])
+
+    chosen_instrument = random.choice(instruments)
+    chosen_beat = random.choice(beat_style)
+    music_prompt = (
+        f"A relaxing 2-minute lofi chillhop beat with {chosen_instrument} and {chosen_beat}. "
+        f"Mood: {mood_tag}. Atmospheric, nostalgic, 75 BPM, perfect for studying or sleeping. No vocals."
+    )
     
-    prompt = f"A relaxing 2-minute lofi chillhop beat with {random.choice(instruments)} and {random.choice(beat_style)}. Atmospheric, nostalgic, and perfect for studying or sleeping. No vocals."
-    
-    print(f"[Agent Leo] 오늘의 작곡 프롬프트: {prompt}")
+    print(f"[Agent Leo] 오늘의 작곡 프롬프트: {music_prompt}")
     print("[Agent Leo] 구글 데이터센터에 음악 생성을 요청합니다. (약 30초~1분 소요)")
     
     try:
         response = client.models.generate_content(
             model="lyria-3-pro-preview",
-            contents=prompt,
+            contents=music_prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO", "TEXT"],
             ),
@@ -225,18 +250,18 @@ def generate_lyria_music():
             with open(music_path, "wb") as f:
                 f.write(audio_data)
             print(f"[Agent Leo] Lyria 3 음악 생성 및 다운로드 성공: {music_path}")
-            return music_path
+            return music_path, music_prompt
         else:
             raise Exception("API 응답에서 오디오 바이트를 찾지 못했습니다.")
             
     except Exception as e:
         print(f"[Error] Lyria 3 음악 생성 실패: {e}")
-        return None
+        return None, music_prompt
 
-def generate_seo_metadata(image_prompt, music_style):
+def generate_seo_metadata(scene_description, music_prompt):
     """
-    그날의 이미지 테마와 음악 스타일에 맞춰, 
-    Gemini 1.5 Flash를 활용해 클릭을 부르는 유튜브 제목, 설명, 태그를 JSON으로 생성합니다.
+    그날의 실제 생성된 시각적 씨과 음악 뎘을 바탕으로,
+    하이퍼퍼스나 Gemini Pro를 통해 감성적인 영문 SEO 메타데이터를 생성합니다.
     """
     print("\n[Agent Leo] AI SEO 화가 출격! 오늘의 메타데이터를 작성합니다...")
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -262,22 +287,27 @@ def generate_seo_metadata(image_prompt, music_style):
     )
 
     user_prompt = (
-        f"Generate Native English SEO metadata for today's Neon Blossom Lofi video.\n"
-        f"WARNING: The output MUST be 100% in English language. NEVER use Korean.\n\n"
-        f"Visual Theme: {image_prompt}\n"
-        f"Music Style: {music_style}\n\n"
-        f"DESCRIPTION FORMAT (follow this structure exactly):\n"
-        f"[1-2 sentences: A poetic, vivid story setting the mood. Describe the rain, the neon lights, and the feeling of midnight solitude in English.]\n\n"
-        f"[2-3 sentences: Describe the music — the tempo, the instruments, and the calming vibe. Invite the listener to study, sleep, or relax with us in English.]\n\n"
-        f"🎵 Tracklist: 00:00 — Full Mix (No Ads)\n\n"
-        f"✨ Behind the Vibe\n"
-        f"This space was carefully crafted using AI to bring you the ultimate midnight sanctuary.\n"
-        f"Curated by: Leo\n"
-        f"Music Engine: Google AI Lyria 3\n"
-        f"Mood: Soft chillhop · Cyberpunk aesthetic · Rainy night ambient\n\n"
-        f"[Hashtag block: 10-15 hashtags including #lofi #cyberpunk #chillhop #aesthetic #lofigirl #lofihiphop #studymusic #sleepmusic #relaxingmusic #animestyle #neonblossom #midnightvibes]\n\n"
-        f"TAGS: Provide 20 high-traffic YouTube search tags as a JSON array."
+        f"Generate native English SEO metadata for a Neon Blossom Lofi YouTube video.\n"
+        f"WARNING: ALL output must be 100% in English. NEVER use Korean.\n\n"
+        f"=== TODAY'S VISUAL SCENE ===\n"
+        f"{scene_description}\n\n"
+        f"=== TODAY'S MUSIC ===\n"
+        f"{music_prompt}\n\n"
+        f"Using the above scene and music as creative fuel, generate:\n"
+        f"1. TITLE: One line, 50-70 chars, emotionally resonant, English only. "
+        f"The title should evoke the specific mood of today's scene and music. Use an em dash (\u2014) for style.\n"
+        f"2. DESCRIPTION: Follow this exact structure:\n"
+        f"   - Opening (2-3 sentences): A poetic, first-person story rooted in the specific scene. "
+        f"Draw directly from the visual (e.g., fireplace = warmth; bedroom = late night; window = city lights blurring through rain). Make it deeply atmospheric.\n"
+        f"   - Music paragraph (2 sentences): Describe the actual instruments and mood of today's music. "
+        f"Invite the listener to use it for studying, sleeping, or relaxing.\n"
+        f"   - \U0001f3b5 Tracklist: 00:00 \u2014 Full Mix (No Ads)\n"
+        f"   - \u2728 Behind the Vibe (3-4 lines): Soft, warm artistic note. Who curated it, the music engine, the mood. "
+        f"Keep it personal and human, never corporate.\n"
+        f"   - Hashtag line: 10-15 hashtags relevant to both the scene and music.\n"
+        f"3. TAGS: 20 high-traffic English YouTube tags as a JSON array."
     )
+
     
     try:
         response = client.models.generate_content(
@@ -406,9 +436,8 @@ def generate_video():
             # Option B: 초저비용 시네마틱 모션 적용
             visual_clip = apply_ken_burns(image_path, audio_clip.duration)
         
-        # 3. AI SEO 메타데이터 실시간 생성 (V6)
-        # 오늘의 분위기를 기반으로 제목/설명/태그를 자동 생성합니다.
-        generate_seo_metadata(visual_prompt, "Emotional Lofi Chillhop")
+        # 3. AI SEO 메타데이터 실시간 생성 (실제 씼 + 음악 프롬프트 연결)
+        generate_seo_metadata(visual_prompt, music_prompt)
 
         print(f"[Agent Leo] V5-Pro-SEO 물리적 렌더링을 시작합니다. 총 길이: {audio_clip.duration:.1f}초")
         
