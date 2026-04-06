@@ -227,24 +227,25 @@ def generate_seo_metadata(image_prompt, music_style):
     client = genai.Client(api_key=api_key)
     
     system_prompt = (
-        "You are a poetic, emotionally intelligent copywriter for a premium Global Lofi music channel called 'Neon Blossom Lofi'. "
+        "You are a poetic, emotionally intelligent Native English copywriter for a premium Global Lofi music channel called 'Neon Blossom Lofi'. "
         "Your task is to write SEO metadata that feels deeply authentic, atmospheric, and emotionally resonant. "
         "CRITICAL RULES: "
-        "1. ALL output must be in English ONLY. No exceptions. "
+        "1. ALL output MUST be strictly in 100% English. DO NOT output any Korean (한국어) under any circumstances. "
         "2. Return ONLY a valid JSON object with keys: 'title', 'description', 'tags'. "
         "3. The description must feel like a personal, artistic diary entry or a warm invitation to relax. "
         "It should NEVER sound corporate, commercial, or like a marketing pitch. "
-        "Include a vivid mood-setting story, describe the chillhop vibe, and gently mention the AI tools used as 'Creative Process' rather than 'Product Notes'. "
-        "4. Title: 50-70 characters, emotional, click-worthy. Use an em dash (—) for style."
+        "Include a vivid mood-setting story, describe the chillhop vibe, and gently mention the AI tools used as 'Creative Process'. "
+        "4. Title: 50-70 characters, emotional, click-worthy in English. Use an em dash (—) for style."
     )
 
     user_prompt = (
-        f"Generate SEO metadata for today's Neon Blossom Lofi video.\n\n"
+        f"Generate Native English SEO metadata for today's Neon Blossom Lofi video.\n"
+        f"WARNING: The output MUST be 100% in English language. NEVER use Korean.\n\n"
         f"Visual Theme: {image_prompt}\n"
         f"Music Style: {music_style}\n\n"
         f"DESCRIPTION FORMAT (follow this structure exactly):\n"
-        f"[1-2 sentences: A poetic, vivid story setting the mood. Describe the rain, the neon lights, and the feeling of midnight solitude.]\n\n"
-        f"[2-3 sentences: Describe the music — the tempo, the instruments, and the calming vibe. Invite the listener to study, sleep, or relax with us.]\n\n"
+        f"[1-2 sentences: A poetic, vivid story setting the mood. Describe the rain, the neon lights, and the feeling of midnight solitude in English.]\n\n"
+        f"[2-3 sentences: Describe the music — the tempo, the instruments, and the calming vibe. Invite the listener to study, sleep, or relax with us in English.]\n\n"
         f"🎵 Tracklist: 00:00 — Full Mix (No Ads)\n\n"
         f"✨ Behind the Vibe\n"
         f"This space was carefully crafted using AI to bring you the ultimate midnight sanctuary.\n"
