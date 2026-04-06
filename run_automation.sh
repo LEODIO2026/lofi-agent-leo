@@ -1,5 +1,14 @@
 #!/bin/bash
-export GEMINI_API_KEY="***REMOVED***"
+# 🔐 보안: .env 파일에서 API 키 로드
+ENV_FILE="$(dirname "$0")/.env"
+if [ -f "$ENV_FILE" ]; then
+  export $(grep -v '^#' "$ENV_FILE" | xargs)
+fi
+if [ -z "$GEMINI_API_KEY" ]; then
+  echo "🚨 오류: GEMINI_API_KEY 환경변수가 설정되어 있지 않습니다."
+  echo "   .env 파일을 확인해주세요."
+  exit 1
+fi
 echo "========================================================="
 echo "🌸 [Neon Blossom Lofi] 에이전트 레오 무인 업로드 체인 가동"
 echo "실행 시각: $(date)"

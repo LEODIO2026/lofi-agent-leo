@@ -7,18 +7,140 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from moviepy.editor import AudioFileClip, ImageClip, VideoFileClip, vfx
 from PIL import Image
 import time
+import requests
+import fal_client
 
 # PIL 버전 호환성 패치 (Pillow 10.0+ 에서 ANTIALIAS 제거됨)
 if not hasattr(Image, "ANTIALIAS"):
     Image.ANTIALIAS = Image.LANCZOS
 
-def generate_nano_banana_image():
-    # 1. API 키 환경 변수 확인
+# =======================================================
+# 전역 설정 0: 채널 정체성 (Identity - Global Edition)
+# =======================================================
+CHANNEL_NAME = "Always Lofi"
+SLOGAN = "Your daily life always needs Lofi."
+
+# =======================================================
+# 전역 설정 1: 시네마틱 '2D 시네마틱 애니메이션' 스타일 (Midnight Edition)
+# =======================================================
+ART_STYLE = (
+    "A world-class modern 2D Japanese anime illustration in high-end cinematic style. "
+    "VISUAL RULES: Crispy clean line art, sharp hard cel-shading with clear shadow boundaries. NO 3D render feel. "
+    "LIGHTING: Gorgeous cinematic lighting contrast - warm indoor yellow glow from lamps vs cool blue/midnight indigo night city outside. "
+    "High-end neon signs and city lights visible through the window with realistic 2D glows. "
+    "Overall Mood: Sophisticated, urban, calm, and intellectually cozy. Masterpiece quality."
+)
+
+# =======================================================
+# 전역 설정 2: 캐릭터 DNA (Midnight Edition - New Standards)
+# =======================================================
+CHARACTER_DESCRIPTION = (
+    "Subject: A beautiful and calm young woman with long, straight obsidian black hair. "
+    "She has expressive dark almond-shaped eyes and a gentle intellectual aura. "
+    "She wears a comfortable modern grey or dark sweater. "
+    "Her constant companion is a sleek Siamese cat (color-pointed cat) with a cream-colored body, "
+    "dark brown face and ears, and striking blue eyes."
+)
+
+# =======================================================
+# 전역 설정 3: 일상의 10가지 순간 (Hybrid Master List)
+# =======================================================
+LIFESTYLE_SCENES = [
+    {"subject": "focusing intensely on her books at a wooden desk at night. A desk lamp lit, steam rising from mug", "lighting": "warm yellow indoor vs blue moonlit night", "mood": "deep focus"},
+    {"subject": "happily organizing her bookshelf in a sun-drenched sunroom. Dust motes dancing", "lighting": "golden afternoon cinematic rays", "mood": "peaceful cleaning"},
+    {"subject": "sitting on the floor eating a bowl of hot ramen. TV glow lighting her face", "lighting": "TV glow in a dark room", "mood": "midnight snack"},
+    {"subject": "leaning her head against a rainy bus window. Earphones in", "lighting": "quiet blue dusk with neon blur", "mood": "moody commute"},
+    {"subject": "walking through a quiet narrow neighborhood alleyway. Lamp posts glowing", "lighting": "dusk streetlights and night sky", "mood": "evening stroll"},
+    {"subject": "resting her chin on her hand, looking at a cherry blossom garden", "lighting": "soft spring daylight with drifting petals", "mood": "daydreaming"},
+    {"subject": "chopping vegetables in a bright kitchen. Sunbeams on the cutting board", "lighting": "bright morning kitchen light", "mood": "domestic bliss"}
+]
+
+def generate_fal_image(prompt):
+    """
+    fal.ai (Grok Imagine) API를 사용하여 고품질 이미지를 생성합니다.
+    """
+    api_key = os.environ.get("FAL_KEY")
+    if not api_key:
+        return None
+    
+    print(f"[Agent Leo] fal.ai (Grok Imagine) 엔진 가동 중...")
+    try:
+        fal_client.api_key = api_key
+        # fal.ai 라이브러리의 subscribe를 사용하여 큐 대기 및 결과 도출
+        result = fal_client.subscribe(
+            "xai/grok-imagine-image",
+            arguments={
+                "prompt": prompt,
+                "image_size": "landscape_16_9" # [Grok Edition] 16:9 와이드로 전환
+            },
+            with_logs=True
+        )
+        
+        if "images" in result and len(result["images"]) > 0:
+            image_url = result["images"][0]["url"]
+            image_path = "assets/branding/Neon_Blossom_Dynamic.png"
+            
+            # 이미지 다운로드
+            response = requests.get(image_url)
+            if response.status_code == 200:
+                with open(image_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"✅ [Agent Leo] fal.ai (Grok) 16:9 이미지 생성 성공: {image_path}")
+                return image_path, image_url
+            
+    except Exception as e:
+        print(f"[Warning] fal.ai 엔진 일시적 장애: {e}")
+    
+    return None, None
+
+def generate_fal_video(image_url, prompt):
+    """
+    fal.ai (Grok Imagine Video) API를 사용하여 이미지를 기반으로 동영상을 생성합니다.
+    (Reference-to-Video 기술 적용)
+    """
+    api_key = os.environ.get("FAL_KEY")
+    if not api_key or not image_url:
+        return None
+    
+    print(f"[Agent Leo] fal.ai (Grok Video) 렌더링 중... (Reference-to-Video)")
+    try:
+        fal_client.api_key = api_key
+        # Grok Video Reference-to-Video 모델 호출
+        result = fal_client.subscribe(
+            "xai/grok-imagine-video/reference-to-video",
+            arguments={
+                "prompt": f"Cinematic 2D animation movement based on @Image1. {prompt}",
+                "reference_image_urls": [image_url],
+                "resolution": "720p" # 유튜브 고화질을 위해 720p 베이스
+            },
+            with_logs=True
+        )
+        
+        if "video" in result:
+            video_url = result["video"]["url"]
+            video_path = "assets/branding/Neon_Blossom_Grok_Video.mp4"
+            
+            # 비디오 다운로드
+            response = requests.get(video_url)
+            if response.status_code == 200:
+                with open(video_path, 'wb') as f:
+                    f.write(response.content)
+                print(f"✅ [Agent Leo] fal.ai (Grok Video) 렌더링 성공: {video_path}")
+                return video_path
+                
+    except Exception as e:
+        print(f"[Warning] fal.ai 비디오 엔진 일시적 장애: {e}")
+    
+    return None
+
+def generate_nano_banana_image(prompt, scene_mood):
+    """
+    구글 Gemini Image (Nano Banana) 모델을 사용하여 이미지를 생성합니다.
+    """
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         print("[Error] GEMINI_API_KEY 환경 변수가 설정되어 있지 않습니다.")
-        print("터미널에서 'export GEMINI_API_KEY=\"발급받은키\"'를 실행 후 다시 가동해주세요.")
-        sys.exit(1)
+        return "assets/branding/Neon_Blossom_Banner.png", "Error Prompt", "Default"
         
     print("[Agent Leo] Nano Banana (Gemini Image API) 호출을 준비합니다...")
     from google import genai
@@ -26,120 +148,29 @@ def generate_nano_banana_image():
     
     client = genai.Client(api_key=api_key)
     
-    # =======================================================
-    # 새 컨셉: 고양이를 좋아하는 여자의 하루 일과
-    # 스타일: 80~90년대 클래식 일본 애니메이션 감성
-    # (키마구레 오렌지로드 / 메종일각 / 초기 지브리)
-    # 무드: 로맨스, 아련함, 그리움, 설레임
-    # =======================================================
-
-    ART_STYLE = (
-        "Classic 1980s-1990s Japanese anime art style, similar to Kimagure Orange Road, Maison Ikkoku, and early Studio Ghibli. "
-        "Clean, expressive line art with soft cel-shading. Warm, slightly desaturated color palette with gentle film grain. "
-        "Big, soulful eyes filled with deep emotion. Soft lighting, natural and lived-in everyday environments. "
-        "NO cyberpunk, NO neon signs, NO sci-fi elements. Purely warm, nostalgic, everyday Japanese aesthetic. "
-        "16:9 cinematic composition. No text in the image."
-    )
-
-    lighting = random.choice([
-        "soft morning light filtering through white curtains",
-        "golden afternoon sunlight casting long gentle shadows",
-        "overcast rainy day with gentle diffused grey light",
-        "warm sunset glow through a wooden window frame",
-        "quiet blue dusk with a single desk lamp lit",
-        "early spring light with cherry blossom petals drifting softly",
-    ])
-
-    scenes = [
-        # 1. 아침: 침대에서 눈을 뜨는 그녀
-        (
-            "A young woman slowly waking up in a cozy single bed, her dark hair fanned across the pillow. "
-            "Her fluffy grey-and-white cat is sitting on her chest, staring at her with golden eyes. "
-            "White curtains billow softly. A small alarm clock, stacked books, and a cat plushie sit on the nightstand.",
-            "waking up with her cat, cozy morning bedroom, warm and drowsy"
-        ),
-        # 2. 아침: 화장실에서 세수하는 그녀
-        (
-            "A young woman leaning over a small bathroom sink, splashing water on her face. "
-            "Her cat perches on the edge of the sink, watching curiously with tilted head. "
-            "A toothbrush in a cup, a small potted plant, and a soft towel are visible. "
-            "Her reflection in the round mirror shows a sleepy, gentle face. Soft morning light through a frosted window.",
-            "morning routine, cat watching, bathroom mirror, sleepy and gentle"
-        ),
-        # 3. 아침식사: 혼자서 먹는 토스트
-        (
-            "A young woman sitting alone at a small wooden kitchen table, eating toast and drinking warm tea. "
-            "Her cat sits on the chair beside her, watching her eat with hopeful eyes. "
-            "A window shows quiet morning street scenery with a bicycle outside. She looks peaceful and slightly lost in thought.",
-            "breakfast alone, cat companion, morning kitchen, quiet and cozy"
-        ),
-        # 4. 통학: 전철을 기다리는 그녀
-        (
-            "A young woman standing alone on a quiet train platform, holding her school bag straps and looking down the tracks. "
-            "A small cat keychain swings from her bag. Her expression is thoughtful and slightly lonely. "
-            "Cherry blossoms drift past. Other commuters are softly blurred in the background.",
-            "waiting for the train, station platform, pensive and nostalgic"
-        ),
-        # 5. 설레임: 우연히 마주친 썸남
-        (
-            "A young woman frozen mid-step on a narrow residential street, her eyes wide and cheeks flushed pink. "
-            "A young man across the way has just looked up from his book and their eyes have unexpectedly met. "
-            "Cherry blossom petals fall gently between them. Time seems to have stopped. Her cat charm swings from her bag. "
-            "The moment is electric, tender, and fleeting.",
-            "unexpected eye contact with a crush, heart flutter, romantic and shy"
-        ),
-        # 6. 학교: 수업 중 딴 생각에 잠긴 그녀
-        (
-            "A young woman sitting at a school desk, her chin resting on one hand. "
-            "She is gazing dreamily out the classroom window at the sky and cherry blossoms, completely lost in her own world. "
-            "Her open notebook has a small cat doodle in the corner. The teacher writes on the blackboard in the soft background. "
-            "The afternoon light falls warmly across her face.",
-            "daydreaming in class, looking out the window, nostalgic school scene"
-        ),
-        # 7. 저녁: 집으로 걸어오는 그녀
-        (
-            "A young woman walking home alone in the early evening, earbuds in, hands tucked in her jacket pockets. "
-            "A stray cat walks beside her along the low stone wall of a quiet residential street. "
-            "The sky is a deep orange and lilac gradient. She has a soft, bittersweet expression, as if thinking of someone.",
-            "walking home at dusk, stray cat companion, bittersweet and wistful"
-        ),
-        # 8. 심야: 창가에 앉아 감성에 빠진 그녀
-        (
-            "A young woman sitting on a window ledge at night, her cat curled warmly in her lap. "
-            "She is looking out at the quiet neighbourhood below, a cup of warm tea held in both hands. "
-            "The room behind her is dim and intimate with a desk lamp, stacked books, and a small cat figurine on the shelf. "
-            "Her expression is soft, longing, and deeply emotional.",
-            "late night by the window, cat in lap, warm tea, longing and emotional"
-        ),
-    ]
-
-    selected_scene, scene_mood = random.choice(scenes)
-
-    prompt = (
-        f"{ART_STYLE} "
-        f"Scene: {selected_scene} "
-        f"Lighting: {lighting}. "
-        f"Mood: {scene_mood}. "
-        f"The girl has dark shoulder-length hair, big expressive eyes, and a warm, gentle presence. "
-        f"The cat has a distinctive, adorable design and appears as her constant companion."
-    )
-    
     print(f"[Agent Leo] 오늘의 테마 프롬프트 추출 완료:\n  -> {prompt}")
     print("[Agent Leo] 구글 데이터센터로 실시간 이미지 생성을 요청합니다. (수 초 소요)")
     
     try:
-        # Nano Banana 2 (gemini-3.1-flash-image-preview) 제너레이터 호출
+        # Nano Banana 2 (gemini-3.1-flash-image-preview) 16:9 와이드 설정으로 호출
         response = client.models.generate_content(
             model="gemini-3.1-flash-image-preview",
-            contents=[prompt]
+            contents=[prompt],
+            config=types.GenerateContentConfig(
+                output_mime_type="image/png",
+                # aspect_ratio="16:9" # 주의: 일부 프리뷰 모델은 config 대신 프롬프트로 제어할 수도 있음
+            )
         )
+        
+        # 프롬프트에 16:9 명시 (가장 확실한 방법)
+        prompt_wide = f"{prompt} Aspect Ratio: Cinematic Wide 16:9."
         
         image_path = "assets/branding/Neon_Blossom_Dynamic.png"
         for part in response.parts:
             if part.inline_data is not None:
                 image = part.as_image()
                 image.save(image_path)
-                print(f"[Agent Leo] 이미지 생성 완료: {image_path}")
+                print(f"✅ Nano Banana 이미지 생성 및 저장 완료: {image_path}")
                 return image_path, prompt, scene_mood
                 
         raise Exception("API 응답에서 생성된 이미지 데이터를 찾지 못했습니다.")
@@ -171,15 +202,12 @@ def generate_veo_video(image_path):
     first_image = types.Image(image_bytes=img_bytes, mime_type="image/png")
     
     prompt = (
-        "A seamless looping cinematic animation in classic 1980s-1990s Japanese anime style (Kimagure Orange Road, early Studio Ghibli). "
-        "The girl is gently alive: she blinks slowly, her dark hair sways softly in the breeze, "
-        "and her shoulders rise and fall with a quiet, deep breath. "
-        "If she has a cat, its tail flicks lazily and one ear twitches. "
-        "If she holds a cup of tea, a soft wisp of steam curls upward. "
-        "If she is near a window, the curtains billow very gently. "
-        "CRITICAL: The animation MUST start and end with the EXACT same pose for a perfect, invisible seamless loop. "
-        "All movement is subtle, tender, and emotionally expressive - like a living watercolor painting. "
-        "Warm, nostalgic Japanese lofi animation aesthetics. Masterpiece quality."
+        f"A cinematic animation in the exact Painterly style of the provided image. "
+        "ANIMATION RHYTHM: Limited animation style, animated on 2s (12 unique drawings per second) for a classic 'stepped' cinematic rhythm. "
+        "VISUAL QUALITY: Keep the soft bloom and hyper-detailed painterly textures. "
+        "MOVEMENT: The girl blinks with character-driven 2D timing, her hair sways in gentle rhythmic increments, and her breathing has the 'frame-by-frame' cadence of a high-end anime film. "
+        "CRITICAL: NO smooth 3D interpolation. The motion must NOT look like a 3D render. It must feel like a sequence of hand-painted masterpieces brought to life with 24fps cinematic soul. "
+        "Loop perfectly with matching start and end frames."
     )
     
     print("[Agent Leo] 구글 데이터센터에 Veo 3 비디오 렌더링을 요청합니다. (수 분 소요)")
@@ -188,6 +216,10 @@ def generate_veo_video(image_path):
             model="veo-3.1-lite-generate-preview",
             prompt=prompt,
             image=first_image,
+            config=types.GenerateVideoConfig(
+                aspect_ratio="16:9",
+                resolution="720p"
+            )
         )
         
         while not operation.done:
@@ -195,16 +227,120 @@ def generate_veo_video(image_path):
             time.sleep(10)
             operation = client.operations.get(operation)
             
-        video = operation.response.generated_videos[0]
-        veo_video_path = "assets/branding/Neon_Blossom_Veo.mp4"
-        client.files.download(file=video.video)
-        video.video.save(veo_video_path)
-        print(f"[Agent Leo] Veo 3 비디오 다운로드 성공: {veo_video_path}")
-        return veo_video_path
-        
+        video_response = getattr(operation, 'response', None)
+        if video_response and hasattr(video_response, 'generated_videos') and video_response.generated_videos:
+            video = video_response.generated_videos[0]
+            veo_video_path = "assets/branding/Neon_Blossom_Veo.mp4"
+            client.files.download(file=video.video)
+            video.video.save(veo_video_path)
+            print(f"[Agent Leo] Veo 3 비디오 다운로드 성공: {veo_video_path}")
+            return veo_video_path
+        else:
+            error_details = getattr(operation, 'error', '알 수 없는 이유로 응답이 비어있습니다.')
+            print(f"[Warning] Veo 3 비디오 생성 스킵: {error_details}")
+            return None
+            
     except Exception as e:
-        print(f"[Error] Veo 3 비디오 처리 중 오류 발생: {e}")
+        print(f"[Error] Veo 3 비디오 처리 중 예외 발생: {e}")
         return None
+
+def apply_vintage_vfx(image_path):
+    """
+    이미지에 80년대 VHS 애니메이션 감성의 빈티지 효과를 적용합니다.
+    (Downscale/Upscale, Chromatic Aberration, Film Grain, Gaussian Softness)
+    """
+    from PIL import Image, ImageFilter, ImageEnhance, ImageChops
+    import numpy as np
+    
+    print(f"[Agent Leo] 📺 '빈티지 레트로' 필터를 적용 중입니다...")
+    
+    img = Image.open(image_path).convert("RGB")
+    original_size = img.size # 보통 (1920, 1080)
+    
+    # 1. 의도적인 화질 저하 (불필요한 경우 해제 가능)
+    # 이미지가 너무 뿌옇다면 이 과정을 건너뜁니다.
+    # low_res_size = (original_size[0] // 2, original_size[1] // 2)
+    # img = img.resize(low_res_size, Image.BILINEAR)
+    # img = img.resize(original_size, Image.BILINEAR)
+    
+    # 2. 크로매틱 애버레이션 (색 번짐 효과)
+    # R, G, B 채널을 각각 아주 살짝 어긋나게 합성하여 아날로그 느낌을 줍니다.
+    r, g, b = img.split()
+    r = ImageChops.offset(r, -1, -1)
+    b = ImageChops.offset(b, 1, 1)
+    img = Image.merge("RGB", (r, g, b))
+    
+    # 3. 필름 그레인 (미세 노이즈)
+    # 화면 전체에 아주 미세한 입자감을 추가합니다.
+    np_img = np.array(img).astype(np.float32)
+    noise = np.random.normal(0, 4, np_img.shape).astype(np.float32)
+    np_img = np.clip(np_img + noise, 0, 255).astype(np.uint8)
+    img = Image.fromarray(np_img)
+    
+    # 4. 미세한 소프트니스 (Gaussian Blur) - 대폭 낮춤
+    # 렌즈 필터를 낀 듯한 아주 미세한 따뜻함만 남깁니다.
+    img = img.filter(ImageFilter.GaussianBlur(radius=0.1))
+    
+    # 5. 대비 및 채도 미세 조정 (빈티지 톤)
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(1.05)
+    enhancer = ImageEnhance.Color(img)
+    img = enhancer.enhance(1.1)
+
+    # 6. 임시 경로 처리 (원본 보존을 위해 파일명 구분)
+    filename = os.path.basename(image_path)
+    vfx_path = f"assets/branding/vfx_{filename}"
+    img.save(vfx_path)
+    return vfx_path
+
+def generate_branding_assets():
+    """
+    유튜브 채널 배너와 프로필 아바타 이미지를 '골든 스타일'로 생성합니다.
+    """
+    import os
+    
+    # 1. 유튜브 배너 (Safe Area Precision 16:9)
+    # 유튜브 규격(2560x1440) 중 중앙 1546x423 영역이 모든 기기 공통 노출 영역임.
+    banner_prompt = (
+        f"{ART_STYLE} {CHARACTER_DESCRIPTION} Sitting together in the center. "
+        "CRITICAL COMPOSITION: Keep the girl and cat strictly in the HORIZONTAL and VERTICAL CENTER of the frame. "
+        "The surrounding top and bottom areas should be filled with beautiful midnight night sky and room floor details. "
+        "Main subjects must fit within the center 1/3 height of the image to ensure mobile/desktop visibility. "
+        "Cinematic wide shot, night city bloom, 35mm film grain, 16:9 widescreen masterpiece."
+    )
+    
+    print("\n[Agent Leo] 🎨 [Grok] 유튜브 배너 이미지를 생성 중 (16:9)...")
+    banner_raw, _ = generate_fal_image(banner_prompt)
+    if banner_raw:
+        # 파일명 변경 (원본 보존)
+        os.rename(banner_raw, "assets/branding/youtube_banner_raw.png")
+        banner_raw = "assets/branding/youtube_banner_raw.png"
+    
+    # 2. 유튜브 프로필 (Square/Expressive 1:1)
+    avatar_prompt = (
+        f"{ART_STYLE} {CHARACTER_DESCRIPTION} An emotional medium close-up shot focusing on the girl and her Siamese cat. "
+        "Gentle interaction, warm indoor lighting against a cool blue night window. "
+        "Sparkling almond eyes, detailed hair, soft bokeh background. Masterpiece cinematic OVA."
+    )
+    
+    print("[Agent Leo] 🌸 [Grok] 유튜브 프로필 이미지를 생성 중 (1:1)...")
+    # 1:1을 위해 새 임시 프롬프트로 호출 (기본이 square일 가능성이 높음)
+    avatar_raw, _ = generate_fal_image(avatar_prompt) 
+    if avatar_raw:
+        os.rename(avatar_raw, "assets/branding/youtube_avatar_raw.png")
+        avatar_raw = "assets/branding/youtube_avatar_raw.png"
+        
+    # 빈티지 필터 적용
+    banner_vfx = apply_vintage_vfx(banner_raw)
+    avatar_vfx = apply_vintage_vfx(avatar_raw)
+    
+    # 최종 파일명으로 정리
+    os.replace(banner_vfx, "assets/branding/youtube_banner.png")
+    os.replace(avatar_vfx, "assets/branding/youtube_avatar.png")
+    
+    print(f"\n✅ 브랜딩 에셋 생성 완료!")
+    print(f"   -> 배너: assets/branding/youtube_banner.png")
+    print(f"   -> 프로필: assets/branding/youtube_avatar.png")
 
 def apply_ken_burns(image_path, duration):
     """
@@ -240,7 +376,7 @@ def apply_ken_burns(image_path, duration):
     final_clip = concatenate_videoclips(clips, method="compose", padding=-crossfade_dur)
     return final_clip
 
-def generate_lyria_music():
+def generate_lyria_music(image_path=None):
     print("\n[Agent Leo] Lyria 3 Pro 모델을 통해 Lofi 음악 작곡을 개시합니다...")
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -253,18 +389,18 @@ def generate_lyria_music():
     client = genai.Client(api_key=api_key)
     
     instruments = [
-        "soft piano and distant vinyl crackle",
-        "warm electric guitar and smooth synth pads",
-        "chill xylophone and acoustic guitar",
-        "deep bass and airy flute",
-        "mellow trumpet and soft electric piano",
-        "lo-fi guitar and warm cello"
+        "soft jazz piano and warm vinyl crackle",
+        "smooth saxophone and mellow synth pads",
+        "upright bass and acoustic guitar",
+        "mellow trumpet and soft jazz chords",
+        "warm electric guitar and electric piano",
+        "chill xylophone and jazzy upright bass"
     ]
     beat_style = [
-        "steady boom-bap drums",
-        "relaxed chillhop beat",
-        "slow ambient percussion",
         "rhythmic jazz-hop drums",
+        "relaxed chillhop beat with swing",
+        "subtle jazzy breakbeats",
+        "steady boom-bap jazz drums",
         "brushed snare and gentle hi-hats"
     ]
     mood_tag = random.choice([
@@ -272,56 +408,77 @@ def generate_lyria_music():
         "warm and nostalgic",
         "dreamy and romantic",
         "peaceful and meditative",
-        "bittersweet and tender"
+        "sophisticated and jazzy"
     ])
 
     chosen_instrument = random.choice(instruments)
     chosen_beat = random.choice(beat_style)
     music_prompt = (
-        f"A relaxing 2-minute lofi chillhop beat with {chosen_instrument} and {chosen_beat}. "
+        f"A relaxing 2-minute jazzy lofi chillhop beat with {chosen_instrument} and {chosen_beat}, "
+        "featuring sophisticated jazzy harmonies and a calm urban vibe. "
         f"Mood: {mood_tag}. Atmospheric, nostalgic, 75 BPM, perfect for studying or sleeping. No vocals."
     )
     
+    # 멀티모달 콘텐츠 구성
+    contents = [f"An atmospheric lofi chillhop track inspired by the mood and colors in this image. {music_prompt}"]
+    
+    if image_path and os.path.exists(image_path):
+        print(f"[Agent Leo] 🖼️ 생성된 이미지의 감성을 분석하여 작곡에 반영합니다...")
+        img = Image.open(image_path)
+        contents.append(img)
+        
     print(f"[Agent Leo] 오늘의 작곡 프롬프트: {music_prompt}")
     print("[Agent Leo] 구글 데이터센터에 음악 생성을 요청합니다. (약 30초~1분 소요)")
+    
+    music_path = "assets/branding/Neon_Blossom_Lyria.mp3"
     
     try:
         response = client.models.generate_content(
             model="lyria-3-pro-preview",
-            contents=music_prompt,
+            contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO", "TEXT"],
             ),
         )
         
-        if not response:
-            raise Exception(" Lyria API로부터 응답을 받지 못했습니다. (None)")
+        if response is None:
+            raise Exception("Lyria API로부터 None 응답을 받았습니다.")
 
-        music_path = "assets/branding/Neon_Blossom_Lyria.mp3"
         audio_data = None
         
-        if response.parts:
+        # 1. response.parts 확인
+        if hasattr(response, 'parts') and response.parts:
             for part in response.parts:
                 if part.inline_data is not None:
                     audio_data = part.inline_data.data
                     break
-        elif response.candidates and response.candidates[0].content.parts:
-            for part in response.candidates[0].content.parts:
+        
+        # 2. candidates 확인 (폴백)
+        if not audio_data and hasattr(response, 'candidates') and response.candidates:
+            parts = getattr(response.candidates[0].content, 'parts', [])
+            for part in parts:
                 if part.inline_data is not None:
                     audio_data = part.inline_data.data
                     break
                 
         if audio_data:
+            os.makedirs(os.path.dirname(music_path), exist_ok=True)
             with open(music_path, "wb") as f:
                 f.write(audio_data)
             print(f"[Agent Leo] Lyria 3 음악 생성 및 다운로드 성공: {music_path}")
             return music_path, music_prompt
         else:
-            raise Exception("API 응답에서 오디오 바이트를 찾지 못했습니다.")
+            raise Exception("API 응답에서 오디오 데이터를 찾지 못했습니다.")
             
     except Exception as e:
         print(f"[Error] Lyria 3 음악 생성 실패: {e}")
-        return None, music_prompt
+        # 폴백 로직: 기존 음원 파일이 있다면 그것을 반환
+        if os.path.exists(music_path):
+            print(f"[Agent Leo] 🚨 폴백 모드 가동: 기존에 생성된 음원을 재사용합니다. ({music_path})")
+            return music_path, music_prompt
+        else:
+            print("[Agent Leo] 🚨 폴백 실패: 로컬 음원 파일도 찾을 수 없습니다.")
+            return None, music_prompt
 
 def generate_seo_metadata(scene_description, music_prompt):
     """
@@ -375,7 +532,7 @@ def generate_seo_metadata(scene_description, music_prompt):
     
     try:
         response = client.models.generate_content(
-            model="gemini-3.1-pro",
+            model="gemini-3.1-pro-preview",
             contents=user_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
@@ -448,33 +605,47 @@ def generate_video():
     print("="*60)
     
     output_path = "assets/pilot_video_01.mp4"
-    audio_path = "assets/source.mp3"
     
-    # 0. Lyria 3를 통한 무인 음악 작곡 체인
-    generated_audio_path, music_prompt = generate_lyria_music()
-    if generated_audio_path and os.path.exists(generated_audio_path):
-        audio_path = generated_audio_path
-        print("✅ [Agent Leo] Lyria 3 음악 생성 완료. SEO에 음악 분위기 연결됩니다.")
-    else:
-        print("[Agent Leo] 음악 생성 실패. 백업 오디오(source.mp3)를 폴백합니다.")
+    # 0. 오늘의 '일상 순간' 선택 (Midnight Edition 시나리오)
+    selected_scene = random.choice(LIFESTYLE_SCENES)
+    visual_prompt = f"{ART_STYLE} {CHARACTER_DESCRIPTION} {selected_scene['subject']}. Lighting: {selected_scene['lighting']}. Mood: {selected_scene['mood']}."
+    scene_mood = selected_scene['mood']
+    
+    # 1. 시도 순서: fal.ai (Grok) -> Nano Banana (Gemini) -> Fallback
+    image_path, image_url = generate_fal_image(visual_prompt)
+    
+    if not image_path:
+        print("[Agent Leo] fal.ai 스킵 또는 실패. Gemini Nano Banana로 전환합니다...")
+        image_path, visual_prompt, scene_mood = generate_nano_banana_image(visual_prompt, scene_mood)
+        image_url = None
 
+    # 📺 [VFX] 빈티지 레트로 필터 적용 (80년대 감성 입히기)
+    image_path = apply_vintage_vfx(image_path)
     
-    if not os.path.exists(audio_path):
-        print(f"[Error] {audio_path} 오디오 소스가 없습니다. 먼저 넣어주세요.")
+    # 2. Lyria 3를 통한 이미지 기반 음악 작곡 (멀티모달 감성 동기화)
+    generated_audio_path, music_prompt = generate_lyria_music(image_path=image_path)
+    if not generated_audio_path or not os.path.exists(generated_audio_path):
+        print("🚨 [Agent Leo] Lyria 3 음악 생성 실패! 파이프라인을 중단합니다.")
+        print("   → API 할당량 또는 네트워크 상태를 확인해주세요.")
         sys.exit(1)
-
-    # 1. Nano Banana를 통한 최초 1회 동적 이미지 생성
-    image_path, visual_prompt, scene_mood = generate_nano_banana_image()
+    
+    audio_path = generated_audio_path
+    print("✅ [Agent Leo] Lyria 3 멀티모달 음악 생성 완료. 이미지의 무드가 사운드에 반영되었습니다.")
     
     if not os.path.exists(image_path):
         print(f"[Error] {image_path} 배너 이미지가 없습니다.")
         sys.exit(1)
 
-    # 1.5. (선택 사항) Veo 3를 통한 동영상 애니메이션 렌더링
-    # 대표님의 비용 절감을 위해 최신 가성비 모델인 'veo-3.1-lite'를 기본으로 사용합니다.
-    USE_VEO_GEN = True # 가성비 모델 활성화
+    # 1.5. (선택 사항) 비디오 애니메이션 렌더링
+    # 우선 순위: Grok Video (fal.ai) -> Veo 3 (Gemini) -> Static
     veo_path = None
-    if USE_VEO_GEN:
+    
+    # [Agent Leo] Grok Video 시도 (Reference-to-Video)
+    if image_url:
+        veo_path = generate_fal_video(image_url, visual_prompt)
+        
+    # Grok Video 실패 시 Veo 3로 폴백
+    if not veo_path:
         veo_path = generate_veo_video(image_path)
 
     # 2. 오디오 및 비디오 병합
@@ -507,13 +678,17 @@ def generate_video():
         print(f"[Agent Leo] V5-Pro-SEO 물리적 렌더링을 시작합니다. 총 길이: {audio_clip.duration:.1f}초")
         
         video = visual_clip.set_audio(audio_clip)
-        video.write_videofile(
+        
+        # [Agent Leo] 16:9 와이드 해상도 고정 (1920x1080)
+        final_video = video.resize(newsize=(1920, 1080))
+        
+        final_video.write_videofile(
             output_path,
             fps=24,
             codec="libx264",
             audio_codec="aac"
         )
-        print(f"[Agent Leo] V5-Pro-SEO 영상 합성 완벽 종료! 저장 경로: {output_path}")
+        print(f"✅ [Agent Leo] V5-Pro-SEO 와이드 합성 종료! 저장 경로: {output_path}")
     except Exception as e:
         print("[Error] 렌더링 도중 에러가 발생했습니다:", e)
         sys.exit(1)
