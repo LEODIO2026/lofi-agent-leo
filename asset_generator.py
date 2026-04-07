@@ -55,6 +55,11 @@ LIFESTYLE_SCENES = [
     {"subject": "chopping vegetables in a bright kitchen. Sunbeams on the cutting board", "lighting": "bright morning kitchen light", "mood": "domestic bliss"}
 ]
 
+# =======================================================
+# 전역 설정 4: 영상 길이 및 합성 (Duration Settings)
+# =======================================================
+TARGET_VIDEO_DURATION = 600  # 기본 10분 (600초) 장편 로파이 설정
+
 def generate_fal_image(prompt):
     """
     fal.ai (Grok Imagine) API를 사용하여 고품질 이미지를 생성합니다.
@@ -414,7 +419,7 @@ def generate_lyria_music(image_path=None):
     chosen_instrument = random.choice(instruments)
     chosen_beat = random.choice(beat_style)
     music_prompt = (
-        f"A relaxing 2-minute jazzy lofi chillhop beat with {chosen_instrument} and {chosen_beat}, "
+        f"A relaxing 3-minute jazzy lofi chillhop beat with {chosen_instrument} and {chosen_beat}, "
         "featuring sophisticated jazzy harmonies and a calm urban vibe. "
         f"Mood: {mood_tag}. Atmospheric, nostalgic, 75 BPM, perfect for studying or sleeping. No vocals."
     )
@@ -680,7 +685,21 @@ def generate_video():
     # 2. 오디오 및 비디오 병합
     print("[Agent Leo] 오디오 및 에셋 로드 중...")
     try:
-        audio_clip = AudioFileClip(audio_path)
+        base_audio = AudioFileClip(audio_path)
+        
+        # [Agent Leo] 로파이 리스너를 위한 장편(10분+) 자동 루핑 시스템
+        if base_audio.duration < TARGET_VIDEO_DURATION:
+            print(f"[Agent Leo] 오디오 길이가 설정값({TARGET_VIDEO_DURATION}초)보다 짧습니다. 심리스 루핑을 생성합니다...")
+            from moviepy.editor import concatenate_audioclips
+            
+            # 심리스 루핑을 위해 각 개별 클립의 앞뒤에 아주 미세한 페이드 적용 (틱 노이즈 방지)
+            loops_needed = int(TARGET_VIDEO_DURATION // base_audio.duration) + 1
+            looped_base = base_audio.audio_fadein(0.1).audio_fadeout(0.1)
+            audio_clips = [looped_base] * loops_needed
+            
+            audio_clip = concatenate_audioclips(audio_clips).set_duration(TARGET_VIDEO_DURATION)
+        else:
+            audio_clip = base_audio
         
         if veo_path and os.path.exists(veo_path):
             print("[Agent Leo] Veo MP4 소스를 로드하고 크로스페이드로 자연스럽게 무한 루핑합니다.")
