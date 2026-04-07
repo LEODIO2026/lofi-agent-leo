@@ -20,11 +20,13 @@ def main():
     try:
         # 1. API 키 및 토큰 로드
         gemini_api_key = get_secret("GEMINI_API_KEY")
+        fal_key = get_secret("FAL_KEY")
         token_json_str = get_secret("YOUTUBE_TOKEN_JSON")
         credentials_json_str = get_secret("YOUTUBE_CREDENTIALS_JSON")
         
         # 2. 환경 변수 및 파일 설정
         os.environ["GEMINI_API_KEY"] = gemini_api_key
+        os.environ["FAL_KEY"] = fal_key
         
         with open("token.json", "w", encoding="utf-8") as f:
             f.write(token_json_str)

@@ -61,7 +61,7 @@ def generate_fal_image(prompt):
     """
     api_key = os.environ.get("FAL_KEY")
     if not api_key:
-        return None
+        return None, None
     
     print(f"[Agent Leo] fal.ai (Grok Imagine) 엔진 가동 중...")
     try:
