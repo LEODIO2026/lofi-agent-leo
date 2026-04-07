@@ -438,6 +438,12 @@ def generate_lyria_music(image_path=None):
             contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO", "TEXT"],
+                safety_settings=[ # 안전 필터 완화 (Lofi 음악 생성을 위해)
+                    types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                    types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                    types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                    types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                ]
             ),
         )
         
@@ -446,19 +452,30 @@ def generate_lyria_music(image_path=None):
 
         audio_data = None
         
-        # 1. response.parts 확인
+        # 1. response.parts 확인 (가장 일반적인 구조)
         if hasattr(response, 'parts') and response.parts:
             for part in response.parts:
                 if part.inline_data is not None:
                     audio_data = part.inline_data.data
                     break
+                elif hasattr(part, 'audio') and part.audio: # [보강] audio 속성 확인
+                    audio_data = part.audio.data
+                    break
         
-        # 2. candidates 확인 (폴백)
+        # 2. candidates 확인 (폴백 구조)
         if not audio_data and hasattr(response, 'candidates') and response.candidates:
-            parts = getattr(response.candidates[0].content, 'parts', [])
+            candidate = response.candidates[0]
+            # 안전 차단 여부 확인
+            if candidate.finish_reason and candidate.finish_reason != "STOP":
+                print(f"[Warning] Lyria 생성 중단됨. 원인: {candidate.finish_reason}")
+                
+            parts = getattr(candidate.content, 'parts', [])
             for part in parts:
                 if part.inline_data is not None:
                     audio_data = part.inline_data.data
+                    break
+                elif hasattr(part, 'audio') and part.audio:
+                    audio_data = part.audio.data
                     break
                 
         if audio_data:
@@ -468,16 +485,23 @@ def generate_lyria_music(image_path=None):
             print(f"[Agent Leo] Lyria 3 음악 생성 및 다운로드 성공: {music_path}")
             return music_path, music_prompt
         else:
+            # 응답은 왔지만 데이터가 없는 경우의 디버깅 정보
+            print(f"[Debug] Lyria 응답 분석 실패. 응답 요약: {response}")
             raise Exception("API 응답에서 오디오 데이터를 찾지 못했습니다.")
             
     except Exception as e:
         print(f"[Error] Lyria 3 음악 생성 실패: {e}")
         # 폴백 로직: 기존 음원 파일이 있다면 그것을 반환
+        # (Cloud Run 환경에서는 도커 이미지에 내장된 기본 파일을 찾습니다)
+        fallback_audio = "assets/branding/Neon_Blossom_Fallback_Lofi.mp3"
         if os.path.exists(music_path):
-            print(f"[Agent Leo] 🚨 폴백 모드 가동: 기존에 생성된 음원을 재사용합니다. ({music_path})")
+            print(f"[Agent Leo] 🚨 폴백 모드: 기존 캐시된 음원을 재사용합니다. ({music_path})")
             return music_path, music_prompt
+        elif os.path.exists(fallback_audio):
+            print(f"[Agent Leo] 🚨 폴백 모드: 기본 내장 음원을 사용합니다. ({fallback_audio})")
+            return fallback_audio, music_prompt
         else:
-            print("[Agent Leo] 🚨 폴백 실패: 로컬 음원 파일도 찾을 수 없습니다.")
+            print("[Agent Leo] 🚨 폴백 실패: 로컬에서도 음원을 찾을 수 없습니다.")
             return None, music_prompt
 
 def generate_seo_metadata(scene_description, music_prompt):
