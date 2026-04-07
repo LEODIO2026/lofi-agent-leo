@@ -502,9 +502,10 @@ def generate_seo_metadata(scene_description, music_prompt):
         "The overall feeling is: romance, wistfulness, longing, and gentle flutter. Like reading someone's diary. "
         "CRITICAL RULES: "
         "1. ALL output MUST be strictly in 100% English. DO NOT output any Korean (한국어) under any circumstances. "
-        "2. Return ONLY a valid JSON object with keys: 'title', 'description', 'tags'. "
-        "3. The description must read like a tender, poetic moment from the girl's day — personal and warm, NEVER corporate or AI-sounding. "
-        "4. Title: 50-70 characters, emotionally resonant English. Use an em dash (—) for style."
+        "Return ONLY a valid JSON object with keys: 'title', 'description', 'tags', and 'pinned_comment'. "
+        "The description must read like a tender, poetic moment from the girl's day — personal and warm, NEVER corporate or AI-sounding. "
+        "Title: 50-70 characters, emotionally resonant English. Use an em dash (—) for style. "
+        "Pinned Comment: A warm, engaging question or thought to encourage listeners to share their current activity or memories, including subtle SEO keywords."
     )
 
     user_prompt = (
@@ -526,7 +527,9 @@ def generate_seo_metadata(scene_description, music_prompt):
         f"   - \u2728 Behind the Vibe (3-4 lines): Soft, warm artistic note. Who curated it, the music engine, the mood. "
         f"Keep it personal and human, never corporate.\n"
         f"   - Hashtag line: 10-15 hashtags relevant to both the scene and music.\n"
-        f"3. TAGS: 20 high-traffic English YouTube tags as a JSON array."
+        f"3. TAGS: 20 high-traffic English YouTube tags as a JSON array.\n"
+        f"4. PINNED_COMMENT: A warm, first-person question directed to the listeners to spark a conversation. "
+        f"Make it deeply connected to the today's mood (e.g., studying, rainy nights, nostalgic memories)."
     )
 
     
@@ -544,7 +547,8 @@ def generate_seo_metadata(scene_description, music_prompt):
         
         # 글로벌(미국/유럽) 로파이 피크 타임 타겟팅
         # KST 12:00 (낮) = UTC 03:00 = EST 22:00 (미국 동부 밤 10시)
-        # 미국인들이 자기 전 로파이를 가장 많이 찾는 황금 시간대입니다.
+        from datetime import datetime, timedelta
+        now = datetime.now()
         publish_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
         if publish_time < now:
             publish_time += timedelta(days=1)
@@ -567,6 +571,8 @@ def generate_seo_metadata(scene_description, music_prompt):
     except Exception as e:
         print(f"[Error] AI SEO 생성 실패: {e}")
         print("[Agent Leo] 폴백: 안전한 영어 기본값을 대신 저장합니다.")
+        from datetime import datetime, timedelta
+        now = datetime.now()
         # 폴백 시에도 글로벌 타겟 시간(KST 12:00/EST 10:00 PM) 동일 적용
         publish_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
         if publish_time < now:
@@ -590,6 +596,7 @@ def generate_seo_metadata(scene_description, music_prompt):
             "tags": ["lofi", "chillhop", "cyberpunk lofi", "study music", "sleep music", "lofi beats",
                      "neon blossom lofi", "midnight vibes", "anime lofi", "lo-fi chill",
                      "lofi girl", "rainy lofi", "coding music", "focus music", "calm music"],
+            "pinned_comment": "Thank you for stopping by. ✨ What are you studying or dreaming of today while listening to these jazzy lofi beats? I'd love to hear your story below.",
             "publishAt": publish_at_utc
         }
         import json as _json
