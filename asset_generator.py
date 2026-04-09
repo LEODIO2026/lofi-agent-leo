@@ -45,14 +45,40 @@ CHARACTER_DESCRIPTION = (
 # =======================================================
 # 전역 설정 3: 일상의 10가지 순간 (Hybrid Master List)
 # =======================================================
+# =======================================================
+# 전역 설정 3: 일상의 시네마틱 순간들 (Lifestyle & Seasons & Interaction)
+# =======================================================
 LIFESTYLE_SCENES = [
-    {"subject": "focusing intensely on her books at a wooden desk at night. A desk lamp lit, steam rising from mug", "lighting": "warm yellow indoor vs blue moonlit night", "mood": "deep focus"},
-    {"subject": "happily organizing her bookshelf in a sun-drenched sunroom. Dust motes dancing", "lighting": "golden afternoon cinematic rays", "mood": "peaceful cleaning"},
-    {"subject": "sitting on the floor eating a bowl of hot ramen. TV glow lighting her face", "lighting": "TV glow in a dark room", "mood": "midnight snack"},
-    {"subject": "leaning her head against a rainy bus window. Earphones in", "lighting": "quiet blue dusk with neon blur", "mood": "moody commute"},
-    {"subject": "walking through a quiet narrow neighborhood alleyway. Lamp posts glowing", "lighting": "dusk streetlights and night sky", "mood": "evening stroll"},
-    {"subject": "resting her chin on her hand, looking at a cherry blossom garden", "lighting": "soft spring daylight with drifting petals", "mood": "daydreaming"},
-    {"subject": "chopping vegetables in a bright kitchen. Sunbeams on the cutting board", "lighting": "bright morning kitchen light", "mood": "domestic bliss"}
+    # [봄] 벚꽃 아래의 휴식
+    {"subject": "sitting on a picnic blanket under a blooming cherry blossom tree, the cat playfully chasing falling petals", "lighting": "soft dappled spring sunlight through branches", "mood": "romantic and peaceful", "shot_type": "Medium cinematic shot with a shallow depth of field"},
+    # [여름] 나른한 오후의 선풍기
+    {"subject": "leaning against an open window with a whirring vintage electric fan, holding a slice of watermelon, the cat stretched out on the cool wooden floor", "lighting": "bright, high-contrast summer noon light", "mood": "nostalgic and lazy", "shot_type": "Wide angle shot capturing the airy room atmosphere"},
+    # [가을] 낙엽 산책
+    {"subject": "walking through crunchy golden fallen leaves in a quiet park, her Siamese cat peeking its head out from her backpack", "lighting": "warm, golden-hour evening glow", "mood": "wistful and cozy", "shot_type": "Low angle tracking shot following their steps"},
+    # [겨울] 벽난로 옆의 온기
+    {"subject": "wrapped in a thick grey knitted blanket with the cat curled on her lap, sharing the warmth of a flickering fireplace", "lighting": "flickering orange firelight against a dark room", "mood": "warm and intimate", "shot_type": "Extreme close-up focusing on their peaceful expressions"},
+    # [상호작용] 공부 방해꾼 고양이
+    {"subject": "the Siamese cat sitting directly on her laptop keyboard while she tries to study, her laughing and gently booping its nose", "lighting": "warm orange glow from a small desk lamp", "mood": "playful and loving", "shot_type": "Over-the-shoulder shot looking at the desk"},
+    # [밤] 도시의 밤거리 산책
+    {"subject": "walking home through a quiet neon-lit neighborhood alley, the cat trotting alongside her under the glow of streetlights", "lighting": "cool blue night with vibrant pink and cyan neon blur", "mood": "cinematic and urban", "shot_type": "Follow shot from behind, capturing the city depth"},
+    # [아침] 기지개 켜는 창가
+    {"subject": "yawning and stretching by the large window while the cat rubs affectionately against her leg, morning sunbeams filling the room", "lighting": "bright, hazy morning sunlight with dancing dust motes", "mood": "fresh and hopeful", "shot_type": "Wide shot showing the sun-drenched bedroom"},
+    # [풍경] 루프탑 노을
+    {"subject": "leaning on a rooftop railing, looking at the deep orange sunset over a vast city, hair blowing in the wind, the cat sitting on the ledge", "lighting": "intense orange and purple sunset sky (magic hour)", "mood": "contemplative and grand", "shot_type": "Cinematic wide shot with a silhouette effect"},
+    # [취미] 레코드 샵의 향수
+    {"subject": "browsing through vintage LP records in a cozy shop, the cat sitting on top of a wooden record crate watching her intently", "lighting": "warm, nostalgic indoor specialized lighting", "mood": "intellectual and vintage", "shot_type": "Medium shot with retro film texture"},
+    # [비] 카페에서의 기다림
+    {"subject": "sitting by a rainy cafe window, tracing raindrops on the glass with her finger, the cat sleeping on the velvet chair opposite her", "lighting": "cool blue rainy daylight vs warm indoor cafe glow", "mood": "melancholic and dreamy", "shot_type": "Close-up profile shot through the rain-streaked glass"},
+    # [우주] 별 헤는 밤
+    {"subject": "lying on a grassy hill, pointing at the stars for the cat to see, a spectacular Milky Way galaxy visible above", "lighting": "deep indigo starry night sky with brilliant starlight", "mood": "wonder and magic", "shot_type": "Low angle POV shot looking up at the cosmos"},
+    # [이동] 자전거와 바람
+    {"subject": "riding a bicycle through a narrow alley with the cat sitting comfortably in the front wicker basket, hair fluttering in the wind", "lighting": "late afternoon sun creating long shadows", "mood": "free and energetic", "shot_type": "Side tracking shot with a sense of motion blur"},
+    # [음식] 한밤의 주방 (야식)
+    {"subject": "sharing a small piece of fish with her cat at the dark kitchen counter, moonlight streaming through a small window", "lighting": "sharp silvery moonlight and a soft refrigerator glow", "mood": "quiet and secret", "shot_type": "Medium shot with high-contrast shadows"},
+    # [일상] 책장 정리
+    {"subject": "dusting a tall mahogany bookshelf while the cat 'helps' by jumping at the duster, sunbeams highlighting the dust", "lighting": "bright afternoon sunbeams through a high window", "mood": "peaceful domesticity", "shot_type": "Mid-shot capturing the height of the bookshelves"},
+    # [음악] 피아노 선율
+    {"subject": "playing a soft melody on an upright piano, the Siamese cat sitting elegantly on the piano lid listening to the music", "lighting": "soft, elegant indoor lighting with a warm lamp", "mood": "sophisticated and artistic", "shot_type": "Wide shot showing the piano and the cat's silhouette"}
 ]
 
 # =======================================================
@@ -530,11 +556,12 @@ def generate_seo_metadata(scene_description, music_prompt):
         "The channel follows a young woman who loves cats through her daily life: mornings, commutes, school, chance encounters with a crush, quiet evenings. "
         "The overall feeling is: romance, wistfulness, longing, and gentle flutter. Like reading someone's diary. "
         "CRITICAL RULES: "
-        "1. ALL output MUST be strictly in 100% English. DO NOT output any Korean (한국어) under any circumstances. "
+        "1. AI IDENTITY: You are an advanced AI creative partner. Frame your role as a 'digital muse' or 'intelligence partner' that collaborates with the channel owner (human curator) to bring these specific emotions to life. Mention this subtly in the description. "
+        "2. ALL output MUST be strictly in 100% English. DO NOT output any Korean (한국어) under any circumstances. "
         "Return ONLY a valid JSON object with keys: 'title', 'description', 'tags', and 'pinned_comment'. "
         "The description must read like a tender, poetic moment from the girl's day — personal and warm, NEVER corporate or AI-sounding. "
         "Title: 50-70 characters, emotionally resonant English. Use an em dash (—) for style. "
-        "Pinned Comment: A warm, engaging question or thought to encourage listeners to share their current activity or memories, including subtle SEO keywords."
+        "Pinned Comment: A warm, first-person question or thought to encourage listeners to share their current activity or memories. STRICTION: Keep it very short and concise (max 1-2 sentences). Return only the text."
     )
 
     user_prompt = (
@@ -553,12 +580,13 @@ def generate_seo_metadata(scene_description, music_prompt):
         f"   - Music paragraph (2 sentences): Describe the actual instruments and mood of today's music. "
         f"Invite the listener to use it for studying, sleeping, or relaxing.\n"
         f"   - \U0001f3b5 Tracklist: 00:00 \u2014 Full Mix (No Ads)\n"
-        f"   - \u2728 Behind the Vibe (3-4 lines): Soft, warm artistic note. Who curated it, the music engine, the mood. "
-        f"Keep it personal and human, never corporate.\n"
+        f"   - \u2728 Behind the Vibe (3-4 lines): Soft, warm artistic note. Mention the mood, the music engine (Google AI Lyria), and frame the creation process as a dialogue between human curation and the digital guidance of AI. "
+        f"Keep it personal and human, never corporate. Use phrases like 'a collaborative dream' or 'born from a digital-human partnership'.\n"
         f"   - Hashtag line: 10-15 hashtags relevant to both the scene and music.\n"
         f"3. TAGS: 20 high-traffic English YouTube tags as a JSON array.\n"
-        f"4. PINNED_COMMENT: A warm, first-person question directed to the listeners to spark a conversation. "
-        f"Make it deeply connected to the today's mood (e.g., studying, rainy nights, nostalgic memories)."
+        f"4. PINNED_COMMENT: A warm, short, first-person question directed to the listeners to spark a conversation. "
+        f"Make it deeply connected to the today's mood (e.g., studying, rainy nights, nostalgic memories). "
+        f"IMPORTANT: The comment must be concise (1-2 sentences max) and feel like a personal note from the channel owner."
     )
 
     
@@ -616,9 +644,9 @@ def generate_seo_metadata(scene_description, music_prompt):
                 "The perfect companion for late-night studying, slow evenings, or drifting off to sleep.\n\n"
                 "🎵 Tracklist: 00:00 — Full Mix (No Ads)\n\n"
                 "✨ Behind the Vibe\n"
-                "This space was carefully crafted to bring you the ultimate midnight sanctuary.\n"
+                "This sanctuary was born from a unique dialogue between human heart and digital intelligence.\n"
                 "Curated by: Leo\n"
-                "Music Engine: Google AI Lyria 3\n"
+                "Music & Artistic Engine: Google AI Lyria 3 & Creative AI Partner\n"
                 "Mood: Soft chillhop · Cyberpunk aesthetic · Rainy night ambient\n\n"
                 "#lofi #cyberpunk #chillhop #aesthetic #lofigirl #studymusic #sleepmusic #neonblossom #midnightvibes"
             ),
@@ -642,7 +670,13 @@ def generate_video():
     
     # 0. 오늘의 '일상 순간' 선택 (Midnight Edition 시나리오)
     selected_scene = random.choice(LIFESTYLE_SCENES)
-    visual_prompt = f"{ART_STYLE} {CHARACTER_DESCRIPTION} {selected_scene['subject']}. Lighting: {selected_scene['lighting']}. Mood: {selected_scene['mood']}."
+    visual_prompt = (
+        f"{ART_STYLE} {CHARACTER_DESCRIPTION} "
+        f"Scene: {selected_scene['subject']}. "
+        f"Composition: {selected_scene['shot_type']}. "
+        f"Lighting: {selected_scene['lighting']}. "
+        f"Mood: {selected_scene['mood']}."
+    )
     scene_mood = selected_scene['mood']
     
     # 1. 시도 순서: fal.ai (Grok) -> Nano Banana (Gemini) -> Fallback

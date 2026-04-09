@@ -1,6 +1,10 @@
 #!/bin/bash
 # Neon Blossom Lofi - Cloud Scheduler 트리거 설정 스크립트 (V6-Pro)
 
+# 맥북 파이썬 충돌 방지를 위한 독립 환경(Miniconda) 지정
+export CLOUDSDK_PYTHON="$(dirname "$0")/miniconda/bin/python"
+GCLOUD_CMD="$(dirname "$0")/google-cloud-sdk/bin/gcloud"
+
 # 1. 변수 설정
 PROJECT_ID="lofi-music-youtube-492204"
 REGION="asia-northeast3"
@@ -14,17 +18,17 @@ echo "========================================================="
 
 # 2. 기존 스케줄러 삭제 (중복 생성 방지)
 echo "[Step 1] 기존 스케줄러 확인 및 정리..."
-gcloud scheduler jobs delete $SCHEDULER_NAME --location=$REGION --quiet 2>/dev/null 2>&1
+$GCLOUD_CMD scheduler jobs delete $SCHEDULER_NAME --location=$REGION --quiet 2>/dev/null 2>&1
 
 # 3. 신규 스케줄러 생성
 # Cloud Run Job을 직접 실행하는 HTTP POST 요청을 보냅니다.
 echo "[Step 2] 매일 오전 9시(KST) 실행 스케줄을 생성합니다..."
-gcloud scheduler jobs create http $SCHEDULER_NAME \
+$GCLOUD_CMD scheduler jobs create http $SCHEDULER_NAME \
     --location=$REGION \
     --schedule="$SCHEDULE" \
-    --uri="https://${REGION}-run.googleapis.com/v1/projects/${PROJECT_ID}/locations/${REGION}/jobs/${JOB_NAME}:run" \
+    --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${JOB_NAME}:run" \
     --http-method=POST \
-    --oauth-service-account-email="$(gcloud projects describe $PROJECT_ID --format='get(projectNumber)')-compute@developer.gserviceaccount.com" \
+    --oauth-service-account-email="$($GCLOUD_CMD projects describe $PROJECT_ID --format='get(projectNumber)')-compute@developer.gserviceaccount.com" \
     --oauth-token-scope="https://www.googleapis.com/auth/cloud-platform" \
     --quiet
 

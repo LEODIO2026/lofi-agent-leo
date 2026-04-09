@@ -25,3 +25,6 @@ automation_log.txt
 # 4. 에이전트 전용 폴더
 .agent/
 .gemini/
+token_*.json
+miniconda/
+Miniconda3*.sh
