@@ -37,7 +37,7 @@ ART_STYLE = (
 CHARACTER_DESCRIPTION = (
     "Subject: A beautiful and calm young woman with long, straight dark black hair falling past her shoulders. "
     "She has soft dark eyes and a gentle, relaxed expression. "
-    "She wears a loose dark grey or charcoal oversized sweatshirt. "
+    "She wears a feminine retro outfit — a soft knit cardigan or vintage-style blouse with a high-waisted pleated midi skirt in warm earth tones (dusty rose, cream, or muted burgundy). Delicate details like lace trim or small floral patterns. "
     "Her constant companion is a Siamese cat — cream-white body with a dark brown face, ears, and bright blue eyes."
 )
 
@@ -602,10 +602,26 @@ def generate_lyria_music(image_path=None):
                     break
                 
         if audio_data:
+            import subprocess as sp
             os.makedirs(os.path.dirname(music_path), exist_ok=True)
-            with open(music_path, "wb") as f:
+            # Lyria returns WAV/PCM — save as temp .wav then convert to mp3
+            wav_path = music_path.replace(".mp3", "_raw.wav")
+            with open(wav_path, "wb") as f:
                 f.write(audio_data)
-            print(f"[Agent Leo] Lyria 3 음악 생성 및 다운로드 성공: {music_path}")
+            print(f"[Agent Leo] Lyria 원본 오디오 저장 완료 ({len(audio_data)//1024}KB). MP3 변환 중...")
+            conv = sp.run(
+                ["ffmpeg", "-y", "-i", wav_path, "-codec:a", "libmp3lame", "-b:a", "192k", music_path],
+                capture_output=True, text=True
+            )
+            if conv.returncode == 0:
+                os.remove(wav_path)
+                print(f"[Agent Leo] Lyria 3 음악 생성 및 MP3 변환 성공: {music_path}")
+            else:
+                # ffmpeg 변환 실패 시 wav 파일 그대로 사용
+                print(f"[Warning] MP3 변환 실패, WAV 파일 사용: {conv.stderr[-300:]}")
+                import shutil
+                shutil.move(wav_path, music_path.replace(".mp3", ".wav"))
+                music_path = music_path.replace(".mp3", ".wav")
             return music_path, music_prompt
         else:
             # 응답은 왔지만 데이터가 없는 경우의 디버깅 정보
