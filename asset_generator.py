@@ -86,9 +86,36 @@ LIFESTYLE_SCENES = [
 # =======================================================
 TARGET_VIDEO_DURATION = 600  # 기본 10분 (600초) 장편 로파이 설정
 
+REFERENCE_IMAGE_GCS_URL = None  # 런타임에 한 번만 업로드 후 캐싱
+
+def _upload_reference_image_to_gcs():
+    """아바타 이미지를 GCS에 공개 업로드하고 URL을 반환합니다 (1회 캐싱)."""
+    global REFERENCE_IMAGE_GCS_URL
+    if REFERENCE_IMAGE_GCS_URL:
+        return REFERENCE_IMAGE_GCS_URL
+
+    ref_path = "assets/branding/Neon_Blossom_Avatar.png"
+    if not os.path.exists(ref_path):
+        return None
+    try:
+        from google.cloud import storage
+        client = storage.Client()
+        bucket = client.bucket("lofi-music-youtube-492204_cloudbuild")
+        blob = bucket.blob("reference/character_avatar.png")
+        blob.upload_from_filename(ref_path, content_type="image/png")
+        blob.make_public()
+        REFERENCE_IMAGE_GCS_URL = blob.public_url
+        print(f"[Agent Leo] 캐릭터 레퍼런스 이미지 GCS 업로드 완료: {REFERENCE_IMAGE_GCS_URL}")
+        return REFERENCE_IMAGE_GCS_URL
+    except Exception as e:
+        print(f"[Warning] 레퍼런스 이미지 GCS 업로드 실패: {e}")
+        return None
+
+
 def generate_kie_image(prompt):
     """
     Kie.ai (Grok Imagine) API를 사용하여 고품질 이미지를 생성합니다. (비동기 폴링)
+    캐릭터 일관성을 위해 기존 아바타 이미지를 레퍼런스로 전달합니다.
     """
     api_key = os.environ.get("KIE_API_KEY")
     if not api_key:
@@ -104,13 +131,18 @@ def generate_kie_image(prompt):
         
         # 1. Task 생성
         create_url = "https://api.kie.ai/api/v1/jobs/createTask"
+        ref_url = _upload_reference_image_to_gcs()
+        input_data = {
+            "prompt": prompt,
+            "aspect_ratio": "3:2",
+            "enable_pro": False,
+        }
+        if ref_url:
+            input_data["reference_image_url"] = ref_url
+            print(f"[Agent Leo] 캐릭터 레퍼런스 이미지 적용: {ref_url}")
         payload = {
             "model": "grok-imagine/text-to-image",
-            "input": {
-                "prompt": prompt,
-                "aspect_ratio": "3:2",
-                "enable_pro": False
-            }
+            "input": input_data,
         }
         
         res = requests.post(create_url, headers=headers, json=payload)
@@ -218,24 +250,36 @@ def generate_nano_banana_image(prompt, scene_mood):
     print("[Agent Leo] Nano Banana (Gemini Image API) 호출을 준비합니다...")
     from google import genai
     from google.genai import types
-    
+
     client = genai.Client(api_key=api_key)
-    
+
     print(f"[Agent Leo] 오늘의 테마 프롬프트 추출 완료:\n  -> {prompt}")
     print("[Agent Leo] 구글 데이터센터로 실시간 이미지 생성을 요청합니다. (수 초 소요)")
-    
+
     try:
+        # 캐릭터 일관성을 위해 기존 아바타를 레퍼런스로 인라인 전달
+        ref_path = "assets/branding/Neon_Blossom_Avatar.png"
+        contents = []
+        if os.path.exists(ref_path):
+            with open(ref_path, "rb") as f:
+                ref_bytes = f.read()
+            contents.append(types.Part.from_bytes(data=ref_bytes, mime_type="image/png"))
+            contents.append(types.Part.from_text(
+                f"Use the character in this reference image (same face, same hair, same cat, same art style). "
+                f"Generate a new scene: {prompt} Aspect Ratio: 16:9 cinematic wide."
+            ))
+            print("[Agent Leo] 캐릭터 레퍼런스 이미지 인라인 적용.")
+        else:
+            contents = [f"{prompt} Aspect Ratio: 16:9 cinematic wide."]
+
         # Gemini 이미지 생성 - response_modalities 사용 (response_mime_type은 텍스트 전용)
         response = client.models.generate_content(
             model="gemini-2.0-flash-preview-image-generation",
-            contents=[prompt],
+            contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE", "TEXT"],
             )
         )
-        
-        # 프롬프트에 16:9 명시 (가장 확실한 방법)
-        prompt_wide = f"{prompt} Aspect Ratio: Cinematic Wide 16:9."
         
         image_path = "assets/branding/Neon_Blossom_Dynamic.png"
         for part in response.parts:
