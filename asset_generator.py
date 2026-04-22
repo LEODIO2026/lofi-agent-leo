@@ -225,12 +225,12 @@ def generate_nano_banana_image(prompt, scene_mood):
     print("[Agent Leo] 구글 데이터센터로 실시간 이미지 생성을 요청합니다. (수 초 소요)")
     
     try:
-        # Nano Banana 2 (gemini-3.1-flash-image-preview) 16:9 와이드 설정으로 호출
+        # Gemini 이미지 생성 - response_modalities 사용 (response_mime_type은 텍스트 전용)
         response = client.models.generate_content(
-            model="gemini-3.1-flash-image-preview",
+            model="gemini-2.0-flash-preview-image-generation",
             contents=[prompt],
             config=types.GenerateContentConfig(
-                response_mime_type="image/png",
+                response_modalities=["IMAGE", "TEXT"],
             )
         )
         
