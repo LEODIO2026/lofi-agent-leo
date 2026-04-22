@@ -24,23 +24,21 @@ SLOGAN = "Your daily life always needs Lofi."
 # 전역 설정 1: 시네마틱 '2D 시네마틱 애니메이션' 스타일 (Midnight Edition)
 # =======================================================
 ART_STYLE = (
-    "A masterpiece retro Japanese anime illustration in the style of 1980s–1990s Showa-era anime. "
-    "STYLE: Soft cel-shading with warm, muted color palette. Vintage film grain texture. "
-    "Hand-drawn quality linework — NOT sharp modern digital art. Gentle, nostalgic aesthetic. "
-    "LIGHTING: Warm amber glow from a small desk lamp, soft moonlight or dusk light outside. "
-    "No neon signs. Quiet suburban or indoor setting. "
-    "Overall Mood: Wistful, romantic, cozy, and deeply nostalgic. Like a still frame from a forgotten 80s anime film."
+    "A high-quality modern anime illustration with a soft 3D-rendered cinematic quality. "
+    "STYLE: Smooth cel-shading, clean lines, slightly realistic proportions — NOT flat 2D. "
+    "LIGHTING: Warm orange glow from an indoor floor lamp contrasting with cool dark-blue night sky and colorful neon signs outside the window. "
+    "Setting: A cozy urban apartment at night, city skyline visible. "
+    "Overall Mood: Calm, urban, cozy, and quietly cinematic. Rich but understated colors."
 )
 
 # =======================================================
 # 전역 설정 2: 캐릭터 DNA (Midnight Edition - New Standards)
 # =======================================================
 CHARACTER_DESCRIPTION = (
-    "Subject: A beautiful and calm young woman with medium-length slightly wavy dark brown hair "
-    "(shoulder-length, soft and natural — NOT long straight hair). "
-    "She has gentle, expressive dark eyes and a warm, quiet aura. "
-    "She wears a cozy oversized sweater in warm tones (orange, beige, or mustard yellow). "
-    "Her constant companion is a small orange tabby cat with soft fur."
+    "Subject: A beautiful and calm young woman with long, straight dark black hair falling past her shoulders. "
+    "She has soft dark eyes and a gentle, relaxed expression. "
+    "She wears a loose dark grey or charcoal oversized sweatshirt. "
+    "Her constant companion is a Siamese cat — cream-white body with a dark brown face, ears, and bright blue eyes."
 )
 
 # =======================================================
@@ -55,11 +53,11 @@ LIFESTYLE_SCENES = [
     # [여름] 나른한 오후의 선풍기
     {"subject": "leaning against an open window with a whirring vintage electric fan, holding a slice of watermelon, the cat stretched out on the cool wooden floor", "lighting": "bright, high-contrast summer noon light", "mood": "nostalgic and lazy", "shot_type": "Wide angle shot capturing the airy room atmosphere"},
     # [가을] 낙엽 산책
-    {"subject": "walking through crunchy golden fallen leaves in a quiet park, her orange tabby cat peeking its head out from her backpack", "lighting": "warm, golden-hour evening glow", "mood": "wistful and cozy", "shot_type": "Low angle tracking shot following their steps"},
+    {"subject": "walking through crunchy golden fallen leaves in a quiet park, her Siamese cat peeking its head out from her backpack", "lighting": "warm, golden-hour evening glow", "mood": "wistful and cozy", "shot_type": "Low angle tracking shot following their steps"},
     # [겨울] 벽난로 옆의 온기
     {"subject": "wrapped in a thick grey knitted blanket with the cat curled on her lap, sharing the warmth of a flickering fireplace", "lighting": "flickering orange firelight against a dark room", "mood": "warm and intimate", "shot_type": "Extreme close-up focusing on their peaceful expressions"},
     # [상호작용] 공부 방해꾼 고양이
-    {"subject": "the orange tabby cat sitting directly on her laptop keyboard while she tries to study, her laughing and gently booping its nose", "lighting": "warm orange glow from a small desk lamp", "mood": "playful and loving", "shot_type": "Over-the-shoulder shot looking at the desk"},
+    {"subject": "the Siamese cat sitting directly on her laptop keyboard while she tries to study, her laughing and gently booping its nose", "lighting": "warm orange glow from a small desk lamp", "mood": "playful and loving", "shot_type": "Over-the-shoulder shot looking at the desk"},
     # [밤] 도시의 밤거리 산책
     {"subject": "walking home through a quiet neon-lit neighborhood alley, the cat trotting alongside her under the glow of streetlights", "lighting": "cool blue night with vibrant pink and cyan neon blur", "mood": "cinematic and urban", "shot_type": "Follow shot from behind, capturing the city depth"},
     # [아침] 기지개 켜는 창가
@@ -79,7 +77,7 @@ LIFESTYLE_SCENES = [
     # [일상] 책장 정리
     {"subject": "dusting a tall mahogany bookshelf while the cat 'helps' by jumping at the duster, sunbeams highlighting the dust", "lighting": "bright afternoon sunbeams through a high window", "mood": "peaceful domesticity", "shot_type": "Mid-shot capturing the height of the bookshelves"},
     # [음악] 피아노 선율
-    {"subject": "playing a soft melody on an upright piano, the orange tabby cat sitting elegantly on the piano lid listening to the music", "lighting": "soft, elegant indoor lighting with a warm lamp", "mood": "sophisticated and artistic", "shot_type": "Wide shot showing the piano and the cat's silhouette"}
+    {"subject": "playing a soft melody on an upright piano, the Siamese cat sitting elegantly on the piano lid listening to the music", "lighting": "soft, elegant indoor lighting with a warm lamp", "mood": "sophisticated and artistic", "shot_type": "Wide shot showing the piano and the cat's silhouette"}
 ]
 
 # =======================================================
@@ -95,8 +93,8 @@ def _upload_reference_image_to_gcs():
     if REFERENCE_IMAGE_GCS_URL:
         return REFERENCE_IMAGE_GCS_URL
 
-    # Final_Original_01~03 중 하나를 원본 채널 스타일 레퍼런스로 사용 (16:9, 원본 톤)
-    candidates = [f"assets/branding/Final_Original_0{i}.png" for i in range(1, 4)]
+    # 채널 공식 레퍼런스 이미지 (youtube_banner → youtube_avatar 순으로 시도)
+    candidates = ["assets/branding/youtube_banner.png", "assets/branding/youtube_avatar.png"]
     ref_path = next((p for p in candidates if os.path.exists(p)), None)
     if not ref_path:
         return None
@@ -260,8 +258,8 @@ def generate_nano_banana_image(prompt, scene_mood):
     print("[Agent Leo] 구글 데이터센터로 실시간 이미지 생성을 요청합니다. (수 초 소요)")
 
     try:
-        # 원본 채널 스타일 레퍼런스 (Final_Original 시리즈, 16:9 원본 톤)
-        candidates = [f"assets/branding/Final_Original_0{i}.png" for i in range(1, 4)]
+        # 채널 공식 레퍼런스 이미지 (youtube_banner → youtube_avatar 순으로 시도)
+        candidates = ["assets/branding/youtube_banner.png", "assets/branding/youtube_avatar.png"]
         ref_path = next((p for p in candidates if os.path.exists(p)), None)
         contents = []
         if os.path.exists(ref_path):
@@ -438,7 +436,7 @@ def generate_branding_assets():
     
     # 2. 유튜브 프로필 (Square/Expressive 1:1)
     avatar_prompt = (
-        f"{ART_STYLE} {CHARACTER_DESCRIPTION} An emotional medium close-up shot focusing on the girl and her orange tabby cat. "
+        f"{ART_STYLE} {CHARACTER_DESCRIPTION} An emotional medium close-up shot focusing on the girl and her Siamese cat. "
         "Gentle interaction, warm indoor lighting against a cool blue night window. "
         "Sparkling almond eyes, detailed hair, soft bokeh background. Masterpiece cinematic OVA."
     )

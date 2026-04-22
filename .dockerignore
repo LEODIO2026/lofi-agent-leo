@@ -15,4 +15,6 @@ assets/**/*.mp4
 assets/**/*.mp3
 !assets/source.mp3
 !assets/branding/Neon_Blossom_Lyria.mp3
+!assets/branding/youtube_banner.png
+!assets/branding/youtube_avatar.png
 automation_log.txt
