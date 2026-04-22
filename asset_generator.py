@@ -491,14 +491,9 @@ def generate_lyria_music(image_path=None):
         f"Mood: {mood_tag}. Atmospheric, nostalgic, 75 BPM, perfect for studying or sleeping. No vocals."
     )
     
-    # 멀티모달 콘텐츠 구성
-    contents = [f"An atmospheric lofi chillhop track inspired by the mood and colors in this image. {music_prompt}"]
-    
-    if image_path and os.path.exists(image_path):
-        print(f"[Agent Leo] 🖼️ 생성된 이미지의 감성을 분석하여 작곡에 반영합니다...")
-        img = Image.open(image_path)
-        contents.append(img)
-        
+    # Lyria 3는 텍스트 전용 입력만 지원 (이미지 입력 시 FinishReason.OTHER 오류 발생)
+    contents = music_prompt
+
     print(f"[Agent Leo] 오늘의 작곡 프롬프트: {music_prompt}")
     print("[Agent Leo] 구글 데이터센터에 음악 생성을 요청합니다. (약 30초~1분 소요)")
     
