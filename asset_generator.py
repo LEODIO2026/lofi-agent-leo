@@ -24,22 +24,23 @@ SLOGAN = "Your daily life always needs Lofi."
 # 전역 설정 1: 시네마틱 '2D 시네마틱 애니메이션' 스타일 (Midnight Edition)
 # =======================================================
 ART_STYLE = (
-    "A world-class modern 2D Japanese anime illustration in high-end cinematic style. "
-    "VISUAL RULES: Crispy clean line art, sharp hard cel-shading with clear shadow boundaries. NO 3D render feel. "
-    "LIGHTING: Gorgeous cinematic lighting contrast - warm indoor yellow glow from lamps vs cool blue/midnight indigo night city outside. "
-    "High-end neon signs and city lights visible through the window with realistic 2D glows. "
-    "Overall Mood: Sophisticated, urban, calm, and intellectually cozy. Masterpiece quality."
+    "A masterpiece retro Japanese anime illustration in the style of 1980s–1990s Showa-era anime. "
+    "STYLE: Soft cel-shading with warm, muted color palette. Vintage film grain texture. "
+    "Hand-drawn quality linework — NOT sharp modern digital art. Gentle, nostalgic aesthetic. "
+    "LIGHTING: Warm amber glow from a small desk lamp, soft moonlight or dusk light outside. "
+    "No neon signs. Quiet suburban or indoor setting. "
+    "Overall Mood: Wistful, romantic, cozy, and deeply nostalgic. Like a still frame from a forgotten 80s anime film."
 )
 
 # =======================================================
 # 전역 설정 2: 캐릭터 DNA (Midnight Edition - New Standards)
 # =======================================================
 CHARACTER_DESCRIPTION = (
-    "Subject: A beautiful and calm young woman with long, straight obsidian black hair. "
-    "She has expressive dark almond-shaped eyes and a gentle intellectual aura. "
-    "She wears a comfortable modern grey or dark sweater. "
-    "Her constant companion is a sleek Siamese cat (color-pointed cat) with a cream-colored body, "
-    "dark brown face and ears, and striking blue eyes."
+    "Subject: A beautiful and calm young woman with medium-length slightly wavy dark brown hair "
+    "(shoulder-length, soft and natural — NOT long straight hair). "
+    "She has gentle, expressive dark eyes and a warm, quiet aura. "
+    "She wears a cozy oversized sweater in warm tones (orange, beige, or mustard yellow). "
+    "Her constant companion is a small orange tabby cat with soft fur."
 )
 
 # =======================================================
@@ -54,11 +55,11 @@ LIFESTYLE_SCENES = [
     # [여름] 나른한 오후의 선풍기
     {"subject": "leaning against an open window with a whirring vintage electric fan, holding a slice of watermelon, the cat stretched out on the cool wooden floor", "lighting": "bright, high-contrast summer noon light", "mood": "nostalgic and lazy", "shot_type": "Wide angle shot capturing the airy room atmosphere"},
     # [가을] 낙엽 산책
-    {"subject": "walking through crunchy golden fallen leaves in a quiet park, her Siamese cat peeking its head out from her backpack", "lighting": "warm, golden-hour evening glow", "mood": "wistful and cozy", "shot_type": "Low angle tracking shot following their steps"},
+    {"subject": "walking through crunchy golden fallen leaves in a quiet park, her orange tabby cat peeking its head out from her backpack", "lighting": "warm, golden-hour evening glow", "mood": "wistful and cozy", "shot_type": "Low angle tracking shot following their steps"},
     # [겨울] 벽난로 옆의 온기
     {"subject": "wrapped in a thick grey knitted blanket with the cat curled on her lap, sharing the warmth of a flickering fireplace", "lighting": "flickering orange firelight against a dark room", "mood": "warm and intimate", "shot_type": "Extreme close-up focusing on their peaceful expressions"},
     # [상호작용] 공부 방해꾼 고양이
-    {"subject": "the Siamese cat sitting directly on her laptop keyboard while she tries to study, her laughing and gently booping its nose", "lighting": "warm orange glow from a small desk lamp", "mood": "playful and loving", "shot_type": "Over-the-shoulder shot looking at the desk"},
+    {"subject": "the orange tabby cat sitting directly on her laptop keyboard while she tries to study, her laughing and gently booping its nose", "lighting": "warm orange glow from a small desk lamp", "mood": "playful and loving", "shot_type": "Over-the-shoulder shot looking at the desk"},
     # [밤] 도시의 밤거리 산책
     {"subject": "walking home through a quiet neon-lit neighborhood alley, the cat trotting alongside her under the glow of streetlights", "lighting": "cool blue night with vibrant pink and cyan neon blur", "mood": "cinematic and urban", "shot_type": "Follow shot from behind, capturing the city depth"},
     # [아침] 기지개 켜는 창가
@@ -78,7 +79,7 @@ LIFESTYLE_SCENES = [
     # [일상] 책장 정리
     {"subject": "dusting a tall mahogany bookshelf while the cat 'helps' by jumping at the duster, sunbeams highlighting the dust", "lighting": "bright afternoon sunbeams through a high window", "mood": "peaceful domesticity", "shot_type": "Mid-shot capturing the height of the bookshelves"},
     # [음악] 피아노 선율
-    {"subject": "playing a soft melody on an upright piano, the Siamese cat sitting elegantly on the piano lid listening to the music", "lighting": "soft, elegant indoor lighting with a warm lamp", "mood": "sophisticated and artistic", "shot_type": "Wide shot showing the piano and the cat's silhouette"}
+    {"subject": "playing a soft melody on an upright piano, the orange tabby cat sitting elegantly on the piano lid listening to the music", "lighting": "soft, elegant indoor lighting with a warm lamp", "mood": "sophisticated and artistic", "shot_type": "Wide shot showing the piano and the cat's silhouette"}
 ]
 
 # =======================================================
@@ -94,8 +95,10 @@ def _upload_reference_image_to_gcs():
     if REFERENCE_IMAGE_GCS_URL:
         return REFERENCE_IMAGE_GCS_URL
 
-    ref_path = "assets/branding/Neon_Blossom_Avatar.png"
-    if not os.path.exists(ref_path):
+    # Final_Original_01~03 중 하나를 원본 채널 스타일 레퍼런스로 사용 (16:9, 원본 톤)
+    candidates = [f"assets/branding/Final_Original_0{i}.png" for i in range(1, 4)]
+    ref_path = next((p for p in candidates if os.path.exists(p)), None)
+    if not ref_path:
         return None
     try:
         from google.cloud import storage
@@ -134,7 +137,7 @@ def generate_kie_image(prompt):
         ref_url = _upload_reference_image_to_gcs()
         input_data = {
             "prompt": prompt,
-            "aspect_ratio": "3:2",
+            "aspect_ratio": "16:9",
             "enable_pro": False,
         }
         if ref_url:
@@ -257,8 +260,9 @@ def generate_nano_banana_image(prompt, scene_mood):
     print("[Agent Leo] 구글 데이터센터로 실시간 이미지 생성을 요청합니다. (수 초 소요)")
 
     try:
-        # 캐릭터 일관성을 위해 기존 아바타를 레퍼런스로 인라인 전달
-        ref_path = "assets/branding/Neon_Blossom_Avatar.png"
+        # 원본 채널 스타일 레퍼런스 (Final_Original 시리즈, 16:9 원본 톤)
+        candidates = [f"assets/branding/Final_Original_0{i}.png" for i in range(1, 4)]
+        ref_path = next((p for p in candidates if os.path.exists(p)), None)
         contents = []
         if os.path.exists(ref_path):
             with open(ref_path, "rb") as f:
@@ -434,7 +438,7 @@ def generate_branding_assets():
     
     # 2. 유튜브 프로필 (Square/Expressive 1:1)
     avatar_prompt = (
-        f"{ART_STYLE} {CHARACTER_DESCRIPTION} An emotional medium close-up shot focusing on the girl and her Siamese cat. "
+        f"{ART_STYLE} {CHARACTER_DESCRIPTION} An emotional medium close-up shot focusing on the girl and her orange tabby cat. "
         "Gentle interaction, warm indoor lighting against a cool blue night window. "
         "Sparkling almond eyes, detailed hair, soft bokeh background. Masterpiece cinematic OVA."
     )
@@ -684,25 +688,16 @@ def generate_seo_metadata(scene_description, music_prompt):
         
         # 글로벌(미국/유럽) 로파이 피크 타임 타겟팅
         # KST 12:00 (낮) = UTC 03:00 = EST 22:00 (미국 동부 밤 10시)
-        from datetime import datetime, timedelta
-        now = datetime.now()
-        publish_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
-        if publish_time < now:
-            publish_time += timedelta(days=1)
-        
-        # ISO 8601 형식 (UTC 기준이므로 뒤에 Z를 붙이거나 오프셋 필요)
-        # 유튜브 API는 UTC 형식을 선호함.
-        publish_at_utc = (publish_time - timedelta(hours=9)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        metadata_json["publishAt"] = publish_at_utc
-        
+        # publishAt 없이 private으로만 유지 (수동 공개 방식)
+        metadata_json.pop("publishAt", None)
+
         metadata_path = "assets/metadata_01.json"
-        
+
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata_json, f, ensure_ascii=False, indent=2)
-            
+
         print(f"[Agent Leo] AI SEO 영문 메타데이터 생성 완료: {metadata_path}")
         print(f"  -> 영문 제목: {metadata_json['title']}")
-        print(f"  -> 예약 시간(UTC): {publish_at_utc}")
         return metadata_path
         
     except Exception as e:
@@ -712,9 +707,6 @@ def generate_seo_metadata(scene_description, music_prompt):
         now = datetime.now()
         # 폴백 시에도 글로벌 타겟 시간(KST 12:00/EST 10:00 PM) 동일 적용
         publish_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
-        if publish_time < now:
-            publish_time += timedelta(days=1)
-        publish_at_utc = (publish_time - timedelta(hours=9)).strftime("%Y-%m-%dT%H:%M:%SZ")
         fallback = {
             "title": "Rainy Night in Neon City — Lofi Beats to Chill & Dream",
             "description": (
@@ -733,8 +725,7 @@ def generate_seo_metadata(scene_description, music_prompt):
             "tags": ["lofi", "chillhop", "cyberpunk lofi", "study music", "sleep music", "lofi beats",
                      "neon blossom lofi", "midnight vibes", "anime lofi", "lo-fi chill",
                      "lofi girl", "rainy lofi", "coding music", "focus music", "calm music"],
-            "pinned_comment": "Thank you for stopping by. ✨ What are you studying or dreaming of today while listening to these jazzy lofi beats? I'd love to hear your story below.",
-            "publishAt": publish_at_utc
+            "pinned_comment": "Thank you for stopping by. ✨ What are you studying or dreaming of today while listening to these jazzy lofi beats? I’d love to hear your story below.",
         }
         import json as _json
         with open("assets/metadata_01.json", 'w', encoding='utf-8') as f:

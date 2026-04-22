@@ -80,9 +80,8 @@ def main():
             "tags": metadata["tags"]
           },
           "status": {
-            "privacyStatus": "private", # 예약 업로드를 위해 private 설정 필수
-            "publishAt": metadata.get("publishAt"), # AI가 계산한 최적 시간 (UTC ISO 8601)
-            "selfDeclaredMadeForKids": False, 
+            "privacyStatus": "private",
+            "selfDeclaredMadeForKids": False,
           }
         },
         media_body=MediaFileUpload(video_file)
