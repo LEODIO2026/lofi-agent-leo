@@ -8,20 +8,17 @@ from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
-# KST = UTC+9
-KST = timezone(timedelta(hours=9))
-# 다음날 공개 목표 시각: 오후 6시 KST (= 09:00 UTC)
-PUBLISH_HOUR_KST = 18
+# 글로벌 로파이 최적 공개 시각: 19:00 UTC
+# → 미국 동부 오후 2시 (공부 시작 피크) / 유럽 오후 7-8시 (퇴근 휴식 피크)
+PUBLISH_HOUR_UTC = 19
 
 def get_next_day_publish_time() -> str:
-    """다음날 오후 6시 KST를 RFC 3339 UTC 문자열로 반환."""
-    now_kst = datetime.now(KST)
-    tomorrow_kst = (now_kst + timedelta(days=1)).replace(
-        hour=PUBLISH_HOUR_KST, minute=0, second=0, microsecond=0
+    """내일 19:00 UTC를 RFC 3339 문자열로 반환 (글로벌 로파이 최적 시간)."""
+    now_utc = datetime.now(timezone.utc)
+    tomorrow_utc = (now_utc + timedelta(days=1)).replace(
+        hour=PUBLISH_HOUR_UTC, minute=0, second=0, microsecond=0
     )
-    # YouTube API는 UTC ISO 8601 형식 요구
-    publish_utc = tomorrow_kst.astimezone(timezone.utc)
-    return publish_utc.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    return tomorrow_utc.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 # YouTube Data API 업로드 권한
 # YouTube Data API 업로드, 댓글 관리 및 구글 드라이브 보관 권한
@@ -85,7 +82,7 @@ def main():
 
     publish_at = get_next_day_publish_time()
     print(f"[Agent Leo] 다음 콘텐츠 업로드를 진행합니다: {metadata['title']}")
-    print(f"[Agent Leo] 예약 공개 시각: 내일 오후 6시 KST ({publish_at} UTC)")
+    print(f"[Agent Leo] 예약 공개 시각: 내일 19:00 UTC ({publish_at}) — 미국 동부 오후 2시 / 유럽 저녁 7-8시")
 
     # 비디오 인서트 요청
     # privacyStatus="private" + publishAt = 예약 공개 (scheduled)
@@ -111,7 +108,7 @@ def main():
         response = request.execute()
         video_id = response.get("id")
         print(f"[Agent Leo] 업로드 완료 성공. 비디오 ID: {video_id}")
-        print(f"[Agent Leo] 예약 공개 설정 완료 — 내일 오후 6시 KST에 자동 공개됩니다.")
+        print(f"[Agent Leo] 예약 공개 설정 완료 — 내일 19:00 UTC (미국 동부 오후 2시)에 자동 공개됩니다.")
         
         # 고정 댓글 자동 게시
         pinned_comment = metadata.get("pinned_comment")
