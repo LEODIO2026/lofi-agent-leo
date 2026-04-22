@@ -86,41 +86,83 @@ LIFESTYLE_SCENES = [
 # =======================================================
 TARGET_VIDEO_DURATION = 600  # 기본 10분 (600초) 장편 로파이 설정
 
-def generate_fal_image(prompt):
+def generate_kie_image(prompt):
     """
-    fal.ai (Grok Imagine) API를 사용하여 고품질 이미지를 생성합니다.
+    Kie.ai (Grok Imagine) API를 사용하여 고품질 이미지를 생성합니다. (비동기 폴링)
     """
-    api_key = os.environ.get("FAL_KEY")
+    api_key = os.environ.get("KIE_API_KEY")
     if not api_key:
         return None, None
     
-    print(f"[Agent Leo] fal.ai (Grok Imagine) 엔진 가동 중...")
+    print(f"[Agent Leo] Kie.ai (Grok Imagine) 엔진 가동 중...")
     try:
-        fal_client.api_key = api_key
-        # fal.ai 라이브러리의 subscribe를 사용하여 큐 대기 및 결과 도출
-        result = fal_client.subscribe(
-            "xai/grok-imagine-image",
-            arguments={
-                "prompt": prompt,
-                "image_size": "landscape_16_9" # [Grok Edition] 16:9 와이드로 전환
-            },
-            with_logs=True
-        )
+        import json
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        }
         
-        if "images" in result and len(result["images"]) > 0:
-            image_url = result["images"][0]["url"]
-            image_path = "assets/branding/Neon_Blossom_Dynamic.png"
+        # 1. Task 생성
+        create_url = "https://api.kie.ai/api/v1/jobs/createTask"
+        payload = {
+            "model": "grok-imagine/text-to-image",
+            "input": {
+                "prompt": prompt,
+                "aspect_ratio": "3:2",
+                "enable_pro": False
+            }
+        }
+        
+        res = requests.post(create_url, headers=headers, json=payload)
+        res_data = res.json()
+        
+        if res_data.get("code") != 200:
+            print(f"[Warning] Kie.ai API 요청 실패: {res_data}")
+            return None, None
             
-            # 이미지 다운로드
-            response = requests.get(image_url)
-            if response.status_code == 200:
-                with open(image_path, 'wb') as f:
-                    f.write(response.content)
-                print(f"✅ [Agent Leo] fal.ai (Grok) 16:9 이미지 생성 성공: {image_path}")
-                return image_path, image_url
+        task_id = res_data["data"]["taskId"]
+        print(f"[Agent Leo] Kie.ai 작업 큐 진입 완료 (Task: {task_id}). 렌더링을 추적합니다...")
+        
+        # 2. 결과 폴링 대기
+        query_url = f"https://api.kie.ai/api/v1/jobs/recordInfo?taskId={task_id}"
+        
+        while True:
+            time.sleep(5)
+            q_res = requests.get(query_url, headers=headers)
+            q_data = q_res.json()
+            
+            if q_data.get("code") != 200:
+                print(f"[Warning] Kie.ai 상태 조회 실패: {q_data}")
+                return None, None
+                
+            state = q_data["data"].get("state")
+            if state == "success":
+                result_json_str = q_data["data"].get("resultJson", "{}")
+                result_obj = json.loads(result_json_str)
+                result_urls = result_obj.get("resultUrls", [])
+                
+                if result_urls:
+                    image_url = result_urls[0]
+                    image_path = "assets/branding/Neon_Blossom_Dynamic.png"
+                    
+                    # 다운로드 및 파일 저장
+                    img_resp = requests.get(image_url)
+                    if img_resp.status_code == 200:
+                        with open(image_path, 'wb') as f:
+                            f.write(img_resp.content)
+                        print(f"✅ [Agent Leo] Kie.ai 이미지 렌더링 완료: {image_path}")
+                        return image_path, image_url
+                break
+                
+            elif state == "fail":
+                print(f"[Warning] Kie.ai 생성 실패: {q_data['data'].get('failMsg')}")
+                return None, None
+                
+            else:
+                print("[Agent Leo] Kie.ai 이미지 렌더링 중... (대기 속행)")
             
     except Exception as e:
-        print(f"[Warning] fal.ai 엔진 일시적 장애: {e}")
+        print(f"[Warning] Kie.ai 엔진 통신 에러: {e}")
     
     return None, None
 
@@ -188,8 +230,7 @@ def generate_nano_banana_image(prompt, scene_mood):
             model="gemini-3.1-flash-image-preview",
             contents=[prompt],
             config=types.GenerateContentConfig(
-                output_mime_type="image/png",
-                # aspect_ratio="16:9" # 주의: 일부 프리뷰 모델은 config 대신 프롬프트로 제어할 수도 있음
+                response_mime_type="image/png",
             )
         )
         
@@ -247,9 +288,9 @@ def generate_veo_video(image_path):
             model="veo-3.1-lite-generate-preview",
             prompt=prompt,
             image=first_image,
-            config=types.GenerateVideoConfig(
+            config=types.GenerateVideosConfig(
                 aspect_ratio="16:9",
-                resolution="720p"
+                person_generation="ALLOW_ADULT"
             )
         )
         
@@ -340,8 +381,8 @@ def generate_branding_assets():
         "Cinematic wide shot, night city bloom, 35mm film grain, 16:9 widescreen masterpiece."
     )
     
-    print("\n[Agent Leo] 🎨 [Grok] 유튜브 배너 이미지를 생성 중 (16:9)...")
-    banner_raw, _ = generate_fal_image(banner_prompt)
+    print("\n[Agent Leo] 🎨 [Grok] 유튜브 배너 이미지를 생성 중 (3:2)...")
+    banner_raw, _ = generate_kie_image(banner_prompt)
     if banner_raw:
         # 파일명 변경 (원본 보존)
         os.rename(banner_raw, "assets/branding/youtube_banner_raw.png")
@@ -354,9 +395,9 @@ def generate_branding_assets():
         "Sparkling almond eyes, detailed hair, soft bokeh background. Masterpiece cinematic OVA."
     )
     
-    print("[Agent Leo] 🌸 [Grok] 유튜브 프로필 이미지를 생성 중 (1:1)...")
-    # 1:1을 위해 새 임시 프롬프트로 호출 (기본이 square일 가능성이 높음)
-    avatar_raw, _ = generate_fal_image(avatar_prompt) 
+    print("[Agent Leo] 🌸 [Grok] 유튜브 프로필 이미지를 생성 중 (3:2)...")
+    # 3:2를 위해 새 임시 프롬프트로 호출
+    avatar_raw, _ = generate_kie_image(avatar_prompt) 
     if avatar_raw:
         os.rename(avatar_raw, "assets/branding/youtube_avatar_raw.png")
         avatar_raw = "assets/branding/youtube_avatar_raw.png"
@@ -679,11 +720,11 @@ def generate_video():
     )
     scene_mood = selected_scene['mood']
     
-    # 1. 시도 순서: fal.ai (Grok) -> Nano Banana (Gemini) -> Fallback
-    image_path, image_url = generate_fal_image(visual_prompt)
+    # 1. 시도 순서: Kie.ai (Grok) -> Nano Banana (Gemini) -> Fallback
+    image_path, image_url = generate_kie_image(visual_prompt)
     
     if not image_path:
-        print("[Agent Leo] fal.ai 스킵 또는 실패. Gemini Nano Banana로 전환합니다...")
+        print("[Agent Leo] Kie.ai 렌더링 스킵 또는 실패. Gemini Nano Banana로 전환합니다...")
         image_path, visual_prompt, scene_mood = generate_nano_banana_image(visual_prompt, scene_mood)
         image_url = None
 
