@@ -752,61 +752,56 @@ def generate_video():
     if not veo_path:
         veo_path = generate_veo_video(image_path)
 
-    # 2. 오디오 및 비디오 병합
-    print("[Agent Leo] 오디오 및 에셋 로드 중...")
+    # 2. 오디오 및 비디오 병합 (FFmpeg 직접 호출로 메모리 절감)
+    print("[Agent Leo] FFmpeg으로 영상 합성을 시작합니다...")
     try:
-        base_audio = AudioFileClip(audio_path)
-        
-        # [Agent Leo] 로파이 리스너를 위한 장편(10분+) 자동 루핑 시스템
-        if base_audio.duration < TARGET_VIDEO_DURATION:
-            print(f"[Agent Leo] 오디오 길이가 설정값({TARGET_VIDEO_DURATION}초)보다 짧습니다. 심리스 루핑을 생성합니다...")
-            from moviepy.editor import concatenate_audioclips
-            
-            # 심리스 루핑을 위해 각 개별 클립의 앞뒤에 아주 미세한 페이드 적용 (틱 노이즈 방지)
-            loops_needed = int(TARGET_VIDEO_DURATION // base_audio.duration) + 1
-            looped_base = base_audio.audio_fadein(0.1).audio_fadeout(0.1)
-            audio_clips = [looped_base] * loops_needed
-            
-            audio_clip = concatenate_audioclips(audio_clips).set_duration(TARGET_VIDEO_DURATION)
-        else:
-            audio_clip = base_audio
-        
-        if veo_path and os.path.exists(veo_path):
-            print("[Agent Leo] Veo MP4 소스를 로드하고 크로스페이드로 자연스럽게 무한 루핑합니다.")
-            from moviepy.editor import concatenate_videoclips
-            base_clip = VideoFileClip(veo_path)
-            veo_dur = base_clip.duration
-            crossfade_dur = min(1.5, veo_dur * 0.2)  # 클립 길이의 20% 또는 최대 1.5초
-            clips = []
-            total = 0
-            while total < audio_clip.duration:
-                c = VideoFileClip(veo_path).subclip(0, min(veo_dur, audio_clip.duration - total))
-                if clips:
-                    c = c.crossfadein(crossfade_dur)
-                clips.append(c)
-                total += veo_dur - crossfade_dur
-            visual_clip = concatenate_videoclips(clips, method="compose", padding=-crossfade_dur)
-        else:
-            # Option B: 초저비용 시네마틱 모션 적용
-            visual_clip = apply_ken_burns(image_path, audio_clip.duration)
-        
-        # 3. AI SEO 메타데이터 실시간 생성 (실제 씼 + 음악 프롬프트 연결)
+        import subprocess
+
+        # 3. AI SEO 메타데이터 실시간 생성
         generate_seo_metadata(visual_prompt, music_prompt)
 
-        print(f"[Agent Leo] V5-Pro-SEO 물리적 렌더링을 시작합니다. 총 길이: {audio_clip.duration:.1f}초")
-        
-        video = visual_clip.set_audio(audio_clip)
-        
-        # [Agent Leo] 16:9 와이드 해상도 고정 (1920x1080)
-        final_video = video.resize(newsize=(1920, 1080))
-        
-        final_video.write_videofile(
-            output_path,
-            fps=24,
-            codec="libx264",
-            audio_codec="aac"
-        )
-        print(f"✅ [Agent Leo] V5-Pro-SEO 와이드 합성 종료! 저장 경로: {output_path}")
+        print(f"[Agent Leo] V5-Pro-SEO FFmpeg 렌더링 시작. 목표 길이: {TARGET_VIDEO_DURATION}초")
+
+        if veo_path and os.path.exists(veo_path):
+            # Veo/Grok 영상 + 오디오 루핑 합성
+            print("[Agent Leo] Veo/Grok MP4 소스로 영상 합성합니다.")
+            cmd = [
+                "ffmpeg", "-y",
+                "-stream_loop", "-1", "-i", veo_path,
+                "-stream_loop", "-1", "-i", audio_path,
+                "-t", str(TARGET_VIDEO_DURATION),
+                "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
+                "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+                "-c:a", "aac", "-b:a", "192k",
+                "-shortest",
+                output_path
+            ]
+        else:
+            # 정지 이미지 + zoompan 효과 + 오디오 루핑 (메모리 최소화)
+            print("[Agent Leo] 이미지 기반 시네마틱 zoompan 효과로 영상 생성합니다.")
+            # zoompan: 20초 주기로 1.0~1.05 사이를 부드럽게 오가는 줌 효과
+            zoom_expr = "1+0.025*sin(2*PI*on/(24*20))"
+            cmd = [
+                "ffmpeg", "-y",
+                "-loop", "1", "-i", image_path,
+                "-stream_loop", "-1", "-i", audio_path,
+                "-t", str(TARGET_VIDEO_DURATION),
+                "-vf", (
+                    f"scale=1920:1080:force_original_aspect_ratio=increase,"
+                    f"crop=1920:1080,"
+                    f"zoompan=z='{zoom_expr}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=1:s=1920x1080:fps=24"
+                ),
+                "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+                "-c:a", "aac", "-b:a", "192k",
+                "-pix_fmt", "yuv420p",
+                output_path
+            ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3000)
+        if result.returncode != 0:
+            print(f"[Error] FFmpeg 실패:\n{result.stderr[-2000:]}")
+            sys.exit(1)
+        print(f"✅ [Agent Leo] V5-Pro-SEO 합성 완료! 저장 경로: {output_path}")
     except Exception as e:
         print("[Error] 렌더링 도중 에러가 발생했습니다:", e)
         sys.exit(1)
