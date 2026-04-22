@@ -262,21 +262,31 @@ def generate_nano_banana_image(prompt, scene_mood):
         candidates = ["assets/branding/youtube_banner.png", "assets/branding/youtube_avatar.png"]
         ref_path = next((p for p in candidates if os.path.exists(p)), None)
         contents = []
-        if os.path.exists(ref_path):
+        instruction = (
+            f"This is the official character reference image for our channel. "
+            f"Reproduce EXACTLY: the same girl's face, long straight black hair, dark hoodie, "
+            f"the Siamese cat, the same art style (smooth 3D-quality anime render), "
+            f"and the same color tone (warm indoor lamp + cool dark city night). "
+            f"Only change the scene/pose/setting. New scene: {prompt} "
+            f"Output must be 16:9 widescreen aspect ratio."
+        )
+        if ref_path:
             with open(ref_path, "rb") as f:
                 ref_bytes = f.read()
-            contents.append(types.Part.from_bytes(data=ref_bytes, mime_type="image/png"))
-            contents.append(types.Part.from_text(
-                f"Use the character in this reference image (same face, same hair, same cat, same art style). "
-                f"Generate a new scene: {prompt} Aspect Ratio: 16:9 cinematic wide."
-            ))
-            print("[Agent Leo] 캐릭터 레퍼런스 이미지 인라인 적용.")
+            contents = types.Content(
+                role="user",
+                parts=[
+                    types.Part(inline_data=types.Blob(data=ref_bytes, mime_type="image/png")),
+                    types.Part(text=instruction),
+                ]
+            )
+            print(f"[Agent Leo] 레퍼런스 이미지 인라인 적용: {ref_path}")
         else:
-            contents = [f"{prompt} Aspect Ratio: 16:9 cinematic wide."]
+            contents = f"{prompt} Aspect Ratio: 16:9 cinematic wide."
 
         # Gemini 이미지 생성 - response_modalities 사용 (response_mime_type은 텍스트 전용)
         response = client.models.generate_content(
-            model="gemini-2.0-flash-preview-image-generation",
+            model="gemini-3.1-flash-image-preview",
             contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE", "TEXT"],
@@ -748,13 +758,14 @@ def generate_video():
     )
     scene_mood = selected_scene['mood']
     
-    # 1. 시도 순서: Kie.ai (Grok) -> Nano Banana (Gemini) -> Fallback
-    image_path, image_url = generate_kie_image(visual_prompt)
-    
-    if not image_path:
-        print("[Agent Leo] Kie.ai 렌더링 스킵 또는 실패. Gemini Nano Banana로 전환합니다...")
-        image_path, visual_prompt, scene_mood = generate_nano_banana_image(visual_prompt, scene_mood)
-        image_url = None
+    # 1. 시도 순서: Gemini (레퍼런스 인라인 전달) -> Kie.ai (텍스트 전용 폴백)
+    # Gemini는 youtube_banner.png를 직접 보고 캐릭터/톤을 맞춰 생성
+    image_path, visual_prompt, scene_mood = generate_nano_banana_image(visual_prompt, scene_mood)
+    image_url = None
+
+    if not image_path or not os.path.exists(image_path):
+        print("[Agent Leo] Gemini 실패. Kie.ai 폴백으로 전환합니다...")
+        image_path, image_url = generate_kie_image(visual_prompt)
 
     # 📺 [VFX] 빈티지 레트로 필터 적용 (80년대 감성 입히기)
     image_path = apply_vintage_vfx(image_path)
