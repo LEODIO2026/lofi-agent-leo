@@ -605,44 +605,61 @@ def generate_lyria_music(image_path=None):
 
         if audio_data:
             import subprocess as sp
+            import shutil
             os.makedirs(os.path.dirname(music_path), exist_ok=True)
-            print(f"[Agent Leo] Lyria 오디오 수신 완료 ({len(audio_data)//1024}KB, mime={audio_mime}). MP3 변환 중...")
+            print(f"[Agent Leo] Lyria 오디오 수신 완료 ({len(audio_data)//1024}KB, mime={audio_mime})")
 
-            # Lyria는 audio/L16 (raw PCM, 헤더 없음) 또는 audio/wav 반환
-            # L16/pcm 계열은 ffmpeg에 샘플 포맷을 명시해야 정상 디코딩됨
-            is_pcm = any(k in audio_mime.lower() for k in ('l16', 'pcm', 's16'))
+            mime_lower = audio_mime.lower()
 
+            # ── Case 1: 이미 MP3 형식 → 변환 없이 바로 저장 ──
+            if 'mpeg' in mime_lower or 'mp3' in mime_lower:
+                with open(music_path, "wb") as f:
+                    f.write(audio_data)
+                print(f"[Agent Leo] Lyria 3 음악 저장 완료 (MP3 직접 저장): {music_path}")
+                return music_path, music_prompt
+
+            # ffmpeg 바이너리 탐색 (Cloud Run: 시스템 PATH, 로컬 Mac: /tmp 다운로드본)
+            ffmpeg_bin = shutil.which("ffmpeg") or next(
+                (p for p in ["/usr/local/bin/ffmpeg", "/opt/homebrew/bin/ffmpeg", "/tmp/ffmpeg"]
+                 if os.path.isfile(p)), None
+            )
+            if not ffmpeg_bin:
+                # ffmpeg 없을 때 원본 그대로 저장 (ffmpeg 없는 로컬 환경 대비)
+                print("[Warning] ffmpeg를 찾을 수 없어 원본 데이터를 저장합니다.")
+                with open(music_path, "wb") as f:
+                    f.write(audio_data)
+                return music_path, music_prompt
+
+            # ── Case 2: raw PCM (audio/L16, s16le) → ffmpeg 포맷 명시 변환 ──
+            is_pcm = any(k in mime_lower for k in ('l16', 'pcm', 's16'))
             if is_pcm:
-                # MIME에서 샘플레이트/채널 수 파싱 (e.g. audio/L16;rate=44100;channel_count=2)
-                rate = 44100
-                channels = 2
-                for token in audio_mime.replace(';', ' ').replace(',', ' ').split():
+                rate, channels = 44100, 2
+                for token in mime_lower.replace(';', ' ').replace(',', ' ').split():
                     if token.startswith('rate='):
                         try: rate = int(token.split('=')[1])
                         except: pass
                     if token.startswith('channel_count='):
                         try: channels = int(token.split('=')[1])
                         except: pass
-                pcm_path = music_path.replace(".mp3", "_raw.pcm")
-                with open(pcm_path, "wb") as f:
+                tmp_path = music_path.replace(".mp3", "_raw.pcm")
+                with open(tmp_path, "wb") as f:
                     f.write(audio_data)
                 conv = sp.run([
-                    "ffmpeg", "-y",
+                    ffmpeg_bin, "-y",
                     "-f", "s16le", "-ar", str(rate), "-ac", str(channels),
-                    "-i", pcm_path,
+                    "-i", tmp_path,
                     "-codec:a", "libmp3lame", "-b:a", "192k", music_path
                 ], capture_output=True, text=True)
-                tmp_path = pcm_path
+
+            # ── Case 3: audio/wav → 표준 WAV 변환 ──
             else:
-                # audio/wav — WAV 헤더 포함, 직접 변환
-                wav_path = music_path.replace(".mp3", "_raw.wav")
-                with open(wav_path, "wb") as f:
+                tmp_path = music_path.replace(".mp3", "_raw.wav")
+                with open(tmp_path, "wb") as f:
                     f.write(audio_data)
                 conv = sp.run([
-                    "ffmpeg", "-y", "-i", wav_path,
+                    ffmpeg_bin, "-y", "-i", tmp_path,
                     "-codec:a", "libmp3lame", "-b:a", "192k", music_path
                 ], capture_output=True, text=True)
-                tmp_path = wav_path
 
             if conv.returncode == 0:
                 try: os.remove(tmp_path)
@@ -650,8 +667,6 @@ def generate_lyria_music(image_path=None):
                 print(f"[Agent Leo] Lyria 3 음악 생성 및 MP3 변환 성공: {music_path}")
             else:
                 print(f"[Warning] MP3 변환 실패 (returncode={conv.returncode}): {conv.stderr[-400:]}")
-                # 변환 실패 시 임시파일을 wav로 보존해 ffmpeg 영상 합성에서 직접 사용
-                import shutil
                 wav_fallback = music_path.replace(".mp3", ".wav")
                 shutil.move(tmp_path, wav_fallback)
                 music_path = wav_fallback
