@@ -574,57 +574,89 @@ def generate_lyria_music(image_path=None):
             raise Exception("Lyria API로부터 None 응답을 받았습니다.")
 
         audio_data = None
-        
+        audio_mime = ""
+
         # 1. response.parts 확인 (가장 일반적인 구조)
         if hasattr(response, 'parts') and response.parts:
             for part in response.parts:
                 if part.inline_data is not None:
                     audio_data = part.inline_data.data
-                    break
-                elif hasattr(part, 'audio') and part.audio: # [보강] audio 속성 확인
-                    audio_data = part.audio.data
-                    break
-        
-        # 2. candidates 확인 (폴백 구조)
-        if not audio_data and hasattr(response, 'candidates') and response.candidates:
-            candidate = response.candidates[0]
-            # 안전 차단 여부 확인
-            if candidate.finish_reason and candidate.finish_reason != "STOP":
-                print(f"[Warning] Lyria 생성 중단됨. 원인: {candidate.finish_reason}")
-                
-            parts = getattr(candidate.content, 'parts', [])
-            for part in parts:
-                if part.inline_data is not None:
-                    audio_data = part.inline_data.data
+                    audio_mime = getattr(part.inline_data, 'mime_type', '') or ''
                     break
                 elif hasattr(part, 'audio') and part.audio:
                     audio_data = part.audio.data
                     break
-                
+
+        # 2. candidates 확인 (폴백 구조)
+        if not audio_data and hasattr(response, 'candidates') and response.candidates:
+            candidate = response.candidates[0]
+            if candidate.finish_reason and candidate.finish_reason != "STOP":
+                print(f"[Warning] Lyria 생성 중단됨. 원인: {candidate.finish_reason}")
+
+            parts = getattr(candidate.content, 'parts', [])
+            for part in parts:
+                if part.inline_data is not None:
+                    audio_data = part.inline_data.data
+                    audio_mime = getattr(part.inline_data, 'mime_type', '') or ''
+                    break
+                elif hasattr(part, 'audio') and part.audio:
+                    audio_data = part.audio.data
+                    break
+
         if audio_data:
             import subprocess as sp
             os.makedirs(os.path.dirname(music_path), exist_ok=True)
-            # Lyria returns WAV/PCM — save as temp .wav then convert to mp3
-            wav_path = music_path.replace(".mp3", "_raw.wav")
-            with open(wav_path, "wb") as f:
-                f.write(audio_data)
-            print(f"[Agent Leo] Lyria 원본 오디오 저장 완료 ({len(audio_data)//1024}KB). MP3 변환 중...")
-            conv = sp.run(
-                ["ffmpeg", "-y", "-i", wav_path, "-codec:a", "libmp3lame", "-b:a", "192k", music_path],
-                capture_output=True, text=True
-            )
+            print(f"[Agent Leo] Lyria 오디오 수신 완료 ({len(audio_data)//1024}KB, mime={audio_mime}). MP3 변환 중...")
+
+            # Lyria는 audio/L16 (raw PCM, 헤더 없음) 또는 audio/wav 반환
+            # L16/pcm 계열은 ffmpeg에 샘플 포맷을 명시해야 정상 디코딩됨
+            is_pcm = any(k in audio_mime.lower() for k in ('l16', 'pcm', 's16'))
+
+            if is_pcm:
+                # MIME에서 샘플레이트/채널 수 파싱 (e.g. audio/L16;rate=44100;channel_count=2)
+                rate = 44100
+                channels = 2
+                for token in audio_mime.replace(';', ' ').replace(',', ' ').split():
+                    if token.startswith('rate='):
+                        try: rate = int(token.split('=')[1])
+                        except: pass
+                    if token.startswith('channel_count='):
+                        try: channels = int(token.split('=')[1])
+                        except: pass
+                pcm_path = music_path.replace(".mp3", "_raw.pcm")
+                with open(pcm_path, "wb") as f:
+                    f.write(audio_data)
+                conv = sp.run([
+                    "ffmpeg", "-y",
+                    "-f", "s16le", "-ar", str(rate), "-ac", str(channels),
+                    "-i", pcm_path,
+                    "-codec:a", "libmp3lame", "-b:a", "192k", music_path
+                ], capture_output=True, text=True)
+                tmp_path = pcm_path
+            else:
+                # audio/wav — WAV 헤더 포함, 직접 변환
+                wav_path = music_path.replace(".mp3", "_raw.wav")
+                with open(wav_path, "wb") as f:
+                    f.write(audio_data)
+                conv = sp.run([
+                    "ffmpeg", "-y", "-i", wav_path,
+                    "-codec:a", "libmp3lame", "-b:a", "192k", music_path
+                ], capture_output=True, text=True)
+                tmp_path = wav_path
+
             if conv.returncode == 0:
-                os.remove(wav_path)
+                try: os.remove(tmp_path)
+                except: pass
                 print(f"[Agent Leo] Lyria 3 음악 생성 및 MP3 변환 성공: {music_path}")
             else:
-                # ffmpeg 변환 실패 시 wav 파일 그대로 사용
-                print(f"[Warning] MP3 변환 실패, WAV 파일 사용: {conv.stderr[-300:]}")
+                print(f"[Warning] MP3 변환 실패 (returncode={conv.returncode}): {conv.stderr[-400:]}")
+                # 변환 실패 시 임시파일을 wav로 보존해 ffmpeg 영상 합성에서 직접 사용
                 import shutil
-                shutil.move(wav_path, music_path.replace(".mp3", ".wav"))
-                music_path = music_path.replace(".mp3", ".wav")
+                wav_fallback = music_path.replace(".mp3", ".wav")
+                shutil.move(tmp_path, wav_fallback)
+                music_path = wav_fallback
             return music_path, music_prompt
         else:
-            # 응답은 왔지만 데이터가 없는 경우의 디버깅 정보
             print(f"[Debug] Lyria 응답 분석 실패. 응답 요약: {response}")
             raise Exception("API 응답에서 오디오 데이터를 찾지 못했습니다.")
             
