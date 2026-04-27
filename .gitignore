@@ -4,6 +4,7 @@
 # 1. 시크릿 및 인증 정보 (절대 업로드 금지)
 token.json
 credentials.json
+secret_token.json
 .GEMINI_API_KEY
 *.key
 *.pem
@@ -28,3 +29,7 @@ automation_log.txt
 token_*.json
 miniconda/
 Miniconda3*.sh
+
+# 5. 빌드 소스 아카이브 (대용량)
+lofi-music-youtube-*/
+*.tar.gz
