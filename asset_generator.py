@@ -24,11 +24,12 @@ SLOGAN = "Your daily life always needs Lofi."
 # 전역 설정 1: 시네마틱 '2D 시네마틱 애니메이션' 스타일 (Midnight Edition)
 # =======================================================
 ART_STYLE = (
-    "A high-quality modern anime illustration with a soft 3D-rendered cinematic quality. "
-    "STYLE: Smooth cel-shading, clean lines, slightly realistic proportions — NOT flat 2D. "
-    "LIGHTING: Warm orange glow from an indoor floor lamp contrasting with cool dark-blue night sky and colorful neon signs outside the window. "
-    "Setting: A cozy urban apartment at night, city skyline visible. "
-    "Overall Mood: Calm, urban, cozy, and quietly cinematic. Rich but understated colors."
+    "A sophisticated high-end cinematic painterly illustration. "
+    "STYLE: Strictly lineless art style with soft-focus painterly realism. ABSOLUTELY ZERO black outlines. "
+    "Character integrates perfectly through soft-edged volumetric lighting and realistic color blending. "
+    "Forms must be defined EXCLUSIVELY by sophisticated color contrast and atmospheric depth. "
+    "Setting: A cozy, high-end urban environment with rich textures and calm cinematic lighting. "
+    "Overall Mood: Deeply nostalgic, calm, and sophisticated. The ultimate high-fidelity lofi aesthetic."
 )
 
 # =======================================================
@@ -86,6 +87,14 @@ LIFESTYLE_SCENES = [
 TARGET_VIDEO_DURATION = 600  # 기본 10분 (600초) 장편 로파이 설정
 
 REFERENCE_IMAGE_GCS_URL = None  # 런타임에 한 번만 업로드 후 캐싱
+
+def _get_ffmpeg_bin():
+    """ffmpeg 바이너리 탐색 (Cloud Run: 시스템 PATH, 로컬 Mac: /tmp 다운로드본)"""
+    import shutil
+    return shutil.which("ffmpeg") or next(
+        (p for p in ["/usr/local/bin/ffmpeg", "/opt/homebrew/bin/ffmpeg", "/tmp/ffmpeg"]
+         if os.path.isfile(p)), "ffmpeg"
+    )
 
 def _upload_reference_image_to_gcs():
     """아바타 이미지를 GCS에 공개 업로드하고 URL을 반환합니다 (1회 캐싱)."""
@@ -258,29 +267,32 @@ def generate_nano_banana_image(prompt, scene_mood):
     print("[Agent Leo] 구글 데이터센터로 실시간 이미지 생성을 요청합니다. (수 초 소요)")
 
     try:
-        # 채널 공식 레퍼런스 이미지 (youtube_banner → youtube_avatar 순으로 시도)
-        candidates = ["assets/branding/youtube_banner.png", "assets/branding/youtube_avatar.png"]
-        ref_path = next((p for p in candidates if os.path.exists(p)), None)
-        contents = []
+        # 채널 공식 레퍼런스 이미지 (아바타와 배너가 모두 존재하면 둘 다 활용)
+        ref_parts = []
+        for p in ["assets/branding/youtube_avatar.png", "assets/branding/youtube_banner.png"]:
+            if os.path.exists(p):
+                with open(p, "rb") as f:
+                    img_data = f.read()
+                ref_parts.append(types.Part(inline_data=types.Blob(data=img_data, mime_type="image/png")))
+                print(f"[Agent Leo] 레퍼런스 이미지 추가: {p}")
+        
         instruction = (
-            f"This is the official character reference image for our channel. "
-            f"Reproduce EXACTLY: the same girl's face, long straight black hair, dark hoodie, "
-            f"the Siamese cat, the same art style (smooth 3D-quality anime render), "
-            f"and the same color tone (warm indoor lamp + cool dark city night). "
-            f"Only change the scene/pose/setting. New scene: {prompt} "
-            f"Output must be 16:9 widescreen aspect ratio."
+            "These are the official character and style reference images for our channel. "
+            "Reproduce the EXACT CHARACTER FEATURES and the SOFISTICATED PAINTERLY TEXTURE of these images. "
+            "CRITICAL: Strictly lineless. NO visible black outlines, strokes, or ink lines. "
+            "Edges must be defined ONLY by soft light, shadow, and seamless color transitions. "
+            "1. Use the AVATAR for identical facial features and character identity. "
+            "2. Use the BANNER for the specific cinematic color palette and calm atmospheric lighting. "
+            f"New scene to generate: {prompt}. "
+            "The character must blend naturally into the scene with high-fidelity painterly realism."
+            "Output: 16:9 widescreen aspect ratio."
         )
-        if ref_path:
-            with open(ref_path, "rb") as f:
-                ref_bytes = f.read()
+
+        if ref_parts:
             contents = types.Content(
                 role="user",
-                parts=[
-                    types.Part(inline_data=types.Blob(data=ref_bytes, mime_type="image/png")),
-                    types.Part(text=instruction),
-                ]
+                parts=ref_parts + [types.Part(text=instruction)]
             )
-            print(f"[Agent Leo] 레퍼런스 이미지 인라인 적용: {ref_path}")
         else:
             contents = f"{prompt} Aspect Ratio: 16:9 cinematic wide."
 
@@ -330,11 +342,12 @@ def generate_veo_video(image_path):
     first_image = types.Image(image_bytes=img_bytes, mime_type="image/png")
     
     prompt = (
-        f"A cinematic animation in the exact Painterly style of the provided image. "
-        "ANIMATION RHYTHM: Limited animation style, animated on 2s (12 unique drawings per second) for a classic 'stepped' cinematic rhythm. "
-        "VISUAL QUALITY: Keep the soft bloom and hyper-detailed painterly textures. "
-        "MOVEMENT: The girl blinks with character-driven 2D timing, her hair sways in gentle rhythmic increments, and her breathing has the 'frame-by-frame' cadence of a high-end anime film. "
-        "CRITICAL: NO smooth 3D interpolation. The motion must NOT look like a 3D render. It must feel like a sequence of hand-painted masterpieces brought to life with 24fps cinematic soul. "
+        f"A sophisticated cinematic painterly animated sequence in the exact style of the provided image. "
+        "ANIMATION RHYTHM: Traditional 2D hand-drawn timing, animated 'on twos' (12 unique drawings per second). "
+        "VISUAL QUALITY: Strictly lineless painterly art. No visible outlines. Shapes defined by soft light and color blending. "
+        "MOVEMENT: Subtle and natural character movement. The atmospheric light should softly shift to create depth. "
+        "CRITICAL: It must look like a modern high-end cinematic production with a calm, sophisticated lineless lofi atmosphere."
+        "SOUND: No background music or melodies. Only subtle ambient environmental sound effects (e.g., wind, rain, room tone). "
         "Loop perfectly with matching start and end frames."
     )
     
@@ -391,17 +404,15 @@ def apply_vintage_vfx(image_path):
     # img = img.resize(low_res_size, Image.BILINEAR)
     # img = img.resize(original_size, Image.BILINEAR)
     
-    # 2. 크로매틱 애버레이션 (색 번짐 효과)
-    # R, G, B 채널을 각각 아주 살짝 어긋나게 합성하여 아날로그 느낌을 줍니다.
-    r, g, b = img.split()
-    r = ImageChops.offset(r, -1, -1)
-    b = ImageChops.offset(b, 1, 1)
-    img = Image.merge("RGB", (r, g, b))
+    # 2. 크로매틱 애버레이션 제거 (원본의 선명한 느낌 유지)
+    # r, g, b = img.split()
+    # r = ImageChops.offset(r, -1, 0) # 수평 번짐만 아주 약간
+    # b = ImageChops.offset(b, 1, 0)
+    # img = Image.merge("RGB", (r, g, b))
     
-    # 3. 필름 그레인 (미세 노이즈)
-    # 화면 전체에 아주 미세한 입자감을 추가합니다.
+    # 3. 필름 그레인 (미세 노이즈) - 강도를 1.5로 대폭 낮춤 (깨끗한 애니메이션 느낌)
     np_img = np.array(img).astype(np.float32)
-    noise = np.random.normal(0, 4, np_img.shape).astype(np.float32)
+    noise = np.random.normal(0, 1.5, np_img.shape).astype(np.float32)
     np_img = np.clip(np_img + noise, 0, 255).astype(np.uint8)
     img = Image.fromarray(np_img)
     
@@ -618,12 +629,8 @@ def generate_lyria_music(image_path=None):
                 print(f"[Agent Leo] Lyria 3 음악 저장 완료 (MP3 직접 저장): {music_path}")
                 return music_path, music_prompt
 
-            # ffmpeg 바이너리 탐색 (Cloud Run: 시스템 PATH, 로컬 Mac: /tmp 다운로드본)
-            ffmpeg_bin = shutil.which("ffmpeg") or next(
-                (p for p in ["/usr/local/bin/ffmpeg", "/opt/homebrew/bin/ffmpeg", "/tmp/ffmpeg"]
-                 if os.path.isfile(p)), None
-            )
-            if not ffmpeg_bin:
+            ffmpeg_bin = _get_ffmpeg_bin()
+            if not os.path.isfile(ffmpeg_bin) and ffmpeg_bin != "ffmpeg":
                 # ffmpeg 없을 때 원본 그대로 저장 (ffmpeg 없는 로컬 환경 대비)
                 print("[Warning] ffmpeg를 찾을 수 없어 원본 데이터를 저장합니다.")
                 with open(music_path, "wb") as f:
@@ -869,18 +876,24 @@ def generate_video():
 
         print(f"[Agent Leo] V5-Pro-SEO FFmpeg 렌더링 시작. 목표 길이: {TARGET_VIDEO_DURATION}초")
 
+        ffmpeg_bin = _get_ffmpeg_bin()
         if veo_path and os.path.exists(veo_path):
             # Veo/Grok 영상 + 오디오 루핑 합성
             print("[Agent Leo] Veo/Grok MP4 소스로 영상 합성합니다.")
             cmd = [
-                "ffmpeg", "-y",
+                ffmpeg_bin, "-y",
                 "-stream_loop", "-1", "-i", veo_path,
                 "-stream_loop", "-1", "-i", audio_path,
                 "-t", str(TARGET_VIDEO_DURATION),
+                "-filter_complex", (
+                    "[0:a]volume=0.5[sfx];"  # AI 영상의 효과음은 50% 볼륨
+                    "[1:a]volume=1.0[bgm];"  # Lyria 로파이 음악은 100% 볼륨
+                    "[sfx][bgm]amix=inputs=2:duration=first:dropout_transition=2[out]"
+                ),
+                "-map", "0:v", "-map", "[out]",
                 "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2",
                 "-c:v", "libx264", "-preset", "fast", "-crf", "23",
                 "-c:a", "aac", "-b:a", "192k",
-                "-shortest",
                 output_path
             ]
         else:
@@ -889,7 +902,7 @@ def generate_video():
             # zoompan: 20초 주기로 1.0~1.05 사이를 부드럽게 오가는 줌 효과
             zoom_expr = "1+0.025*sin(2*PI*on/(24*20))"
             cmd = [
-                "ffmpeg", "-y",
+                ffmpeg_bin, "-y",
                 "-loop", "1", "-i", image_path,
                 "-stream_loop", "-1", "-i", audio_path,
                 "-t", str(TARGET_VIDEO_DURATION),
