@@ -1,6 +1,10 @@
 import os
 import sys
 import random
+from dotenv import load_dotenv
+
+# 환경 변수 로드 (.env 파일이 있으면 읽어옴)
+load_dotenv()
 
 # Suppress warnings
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
@@ -245,6 +249,94 @@ def generate_fal_video(image_url, prompt):
                 
     except Exception as e:
         print(f"[Warning] fal.ai 비디오 엔진 일시적 장애: {e}")
+    
+    return None
+
+def generate_higgsfield_image(prompt):
+    """
+    Higgsfield CLI를 사용하여 고품질 이미지를 생성합니다.
+    """
+    print(f"[Agent Leo] Higgsfield (Nano Banana 2) 이미지 엔진 가동 중...")
+    try:
+        import subprocess
+        import json
+        import requests
+
+        # CLI 명령어 실행 (JSON 출력 모드)
+        cmd = ["higgsfield", "generate", "create", "nano_banana_2", "--prompt", prompt, "--wait", "--json"]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"[Warning] Higgsfield CLI 실행 실패: {result.stderr}")
+            return None, None
+
+        # 결과 파싱 및 URL 추출
+        output = json.loads(result.stdout)
+        
+        # Higgsfield CLI 응답은 리스트 형태일 수 있음
+        if isinstance(output, list) and len(output) > 0:
+            image_url = output[0].get("result_url")
+        else:
+            image_url = output.get("result_url") or output.get("url")
+        
+        if image_url:
+            image_path = "assets/branding/Neon_Blossom_Higgsfield.png"
+            resp = requests.get(image_url)
+            if resp.status_code == 200:
+                with open(image_path, "wb") as f:
+                    f.write(resp.content)
+                print(f"✅ [Agent Leo] Higgsfield 이미지 생성 및 다운로드 완료: {image_path}")
+                return image_path, image_url
+                
+    except Exception as e:
+        print(f"[Warning] Higgsfield 이미지 생성 중 에러: {e}")
+    
+    return None, None
+
+def generate_higgsfield_video(prompt, image_path=None):
+    """
+    Higgsfield CLI를 사용하여 고퀄리티 영상을 생성합니다. (Kling 3.0 모델 사용)
+    """
+    print(f"[Agent Leo] Higgsfield (Kling 3.0) 영상 엔진 가동 중...")
+    try:
+        import subprocess
+        import json
+        import requests
+
+        model = "kling3_0"
+        # 기본 명령어 구성
+        cmd = ["higgsfield", "generate", "create", model, "--prompt", prompt, "--duration", "5", "--wait", "--json"]
+        
+        # 이미지 기반 생성(Image-to-Video)인 경우
+        if image_path and os.path.exists(image_path):
+            cmd.extend(["--start-image", image_path])
+            print(f"[Agent Leo] Image-to-Video 모드 적용: {image_path}")
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            print(f"[Warning] Higgsfield CLI 실행 실패: {result.stderr}")
+            return None
+
+        output = json.loads(result.stdout)
+        
+        # Higgsfield CLI 응답은 리스트 형태일 수 있음
+        if isinstance(output, list) and len(output) > 0:
+            video_url = output[0].get("result_url")
+        else:
+            video_url = output.get("result_url") or output.get("url")
+        
+        if video_url:
+            video_output = "assets/branding/Neon_Blossom_Higgsfield.mp4"
+            resp = requests.get(video_url)
+            if resp.status_code == 200:
+                with open(video_output, "wb") as f:
+                    f.write(resp.content)
+                print(f"✅ [Agent Leo] Higgsfield 영상 생성 및 다운로드 완료: {video_output}")
+                return video_output
+                
+    except Exception as e:
+        print(f"[Warning] Higgsfield 영상 생성 중 에러: {e}")
     
     return None
 
@@ -828,10 +920,14 @@ def generate_video():
     )
     scene_mood = selected_scene['mood']
     
-    # 1. 시도 순서: Gemini (레퍼런스 인라인 전달) -> Kie.ai (텍스트 전용 폴백)
-    # Gemini는 youtube_banner.png를 직접 보고 캐릭터/톤을 맞춰 생성
-    image_path, visual_prompt, scene_mood = generate_nano_banana_image(visual_prompt, scene_mood)
-    image_url = None
+    # 1. 시도 순서: Higgsfield -> Gemini (레퍼런스 인라인 전달) -> Kie.ai (텍스트 전용 폴백)
+    # 힉스필드를 최우선 엔진으로 사용해봅니다.
+    image_path, image_url = generate_higgsfield_image(visual_prompt)
+    
+    if not image_path:
+        print("[Agent Leo] Higgsfield 실패. Gemini 엔진으로 전환합니다...")
+        image_path, visual_prompt, scene_mood = generate_nano_banana_image(visual_prompt, scene_mood)
+        image_url = None
 
     if not image_path or not os.path.exists(image_path):
         print("[Agent Leo] Gemini 실패. Kie.ai 폴백으로 전환합니다...")
@@ -855,11 +951,14 @@ def generate_video():
         sys.exit(1)
 
     # 1.5. (선택 사항) 비디오 애니메이션 렌더링
-    # 우선 순위: Grok Video (fal.ai) -> Veo 3 (Gemini) -> Static
+    # 우선 순위: Higgsfield -> Grok Video (fal.ai) -> Veo 3 (Gemini) -> Static
     veo_path = None
     
-    # [Agent Leo] Grok Video 시도 (Reference-to-Video)
-    if image_url:
+    # [Agent Leo] Higgsfield Video 시도 (Kling 3.0)
+    veo_path = generate_higgsfield_video(visual_prompt, image_path=image_path)
+
+    # Higgsfield 실패 시 Grok Video 시도 (Reference-to-Video)
+    if not veo_path and image_url:
         veo_path = generate_fal_video(image_url, visual_prompt)
         
     # Grok Video 실패 시 Veo 3로 폴백
